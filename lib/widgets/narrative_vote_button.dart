@@ -3,10 +3,11 @@ import '../app/theme/app_colors.dart';
 import '../app/theme/app_text_styles.dart';
 import '../models/vote_model.dart';
 
-/// 대화형 선택지 버튼 (세로형)
-class NarrativeVoteButton extends StatefulWidget {
+/// 최종 표결용 카드 선택지
+class NarrativeVoteButton extends StatelessWidget {
   final VoteType voteType;
-  final String text;
+  final String title;
+  final String description;
   final VoidCallback onPressed;
   final bool enabled;
   final bool isSelected;
@@ -14,134 +15,150 @@ class NarrativeVoteButton extends StatefulWidget {
   const NarrativeVoteButton({
     super.key,
     required this.voteType,
-    required this.text,
+    required this.title,
+    required this.description,
     required this.onPressed,
     this.enabled = true,
     this.isSelected = false,
   });
 
-  @override
-  State<NarrativeVoteButton> createState() => _NarrativeVoteButtonState();
-}
+  Color get _color => switch (voteType) {
+        VoteType.yes => AppColors.voteYes,
+        VoteType.no => AppColors.voteNo,
+        VoteType.abstain => AppColors.textSecondary,
+      };
 
-class _NarrativeVoteButtonState extends State<NarrativeVoteButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
+  Color get _surfaceColor => switch (voteType) {
+        VoteType.yes => AppColors.voteYesBg,
+        VoteType.no => AppColors.voteNoBg,
+        VoteType.abstain => AppColors.surfaceVariant,
+      };
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 150),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
+  Widget _buildSymbol(BuildContext context) {
+    const double size = 28;
+    const double strokeWidth = 3.5;
 
-  @override
-  void didUpdateWidget(covariant NarrativeVoteButton oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isSelected && !oldWidget.isSelected) {
-      _controller.forward().then((_) => _controller.reverse());
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Color get _color {
-    switch (widget.voteType) {
+    switch (voteType) {
       case VoteType.yes:
-        return AppColors.voteYes;
-      case VoteType.no:
-        return AppColors.voteNo;
+        return Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: _color,
+              width: strokeWidth,
+            ),
+          ),
+        );
       case VoteType.abstain:
-        return AppColors.textSecondary;
-    }
-  }
-
-  Color get _bgColor {
-    switch (widget.voteType) {
-      case VoteType.yes:
-        return AppColors.voteYesBg;
+        return const SizedBox(
+          width: size,
+          height: size,
+          child: Icon(
+            Icons.change_history_rounded,
+            color: AppColors.textSecondary,
+            size: size + 4,
+          ),
+        );
       case VoteType.no:
-        return AppColors.voteNoBg;
-      case VoteType.abstain:
-        return AppColors.surfaceVariant;
+        return const SizedBox(
+          width: size,
+          height: size,
+          child: Icon(
+            Icons.close_rounded,
+            color: AppColors.voteNo,
+            size: size + 6,
+          ),
+        );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _scaleAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnimation.value,
-          child: child,
-        );
-      },
-      child: GestureDetector(
-        onTapDown: (_) {
-          if (widget.enabled) _controller.forward();
-        },
-        onTapUp: (_) {
-          if (widget.enabled) {
-            _controller.reverse();
-            widget.onPressed();
-          }
-        },
-        onTapCancel: () {
-          if (widget.enabled) _controller.reverse();
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: double.infinity,
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-          decoration: BoxDecoration(
-            color: widget.isSelected ? _color : _bgColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: _color.withValues(alpha: widget.enabled ? 0.3 : 0.1),
-              width: 1.5,
-            ),
-            boxShadow: widget.isSelected
-                ? [
-                    BoxShadow(
-                      color: _color.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
+    final borderColor = isSelected ? _color : AppColors.divider;
+    final backgroundColor = isSelected
+        ? _surfaceColor
+        : enabled
+            ? AppColors.surface
+            : AppColors.surfaceVariant.withValues(alpha: 0.55);
+
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      selected: isSelected,
+      label: '$title. $description',
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: borderColor.withValues(alpha: enabled ? 1 : 0.45),
+            width: isSelected ? 2.2 : 1.2,
           ),
-          child: Row(
-            children: [
-              Text(
-                widget.voteType.emoji,
-                style: const TextStyle(fontSize: 22),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  widget.text,
-                  style: AppTextStyles.titleMedium.copyWith(
-                    color: widget.isSelected ? Colors.white : AppColors.textPrimary,
-                    fontWeight: widget.isSelected ? FontWeight.w700 : FontWeight.w500,
+          boxShadow: enabled && !isSelected
+              ? const [
+                  BoxShadow(
+                    color: Color(0x06000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
                   ),
-                ),
+                ]
+              : null,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: enabled ? onPressed : null,
+            splashColor: _color.withValues(alpha: 0.1),
+            highlightColor: _color.withValues(alpha: 0.05),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.transparent : _surfaceColor,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: _buildSymbol(context),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    title,
+                    style: AppTextStyles.titleMedium.copyWith(
+                      color: enabled
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    description,
+                    style: AppTextStyles.caption.copyWith(
+                      fontSize: 11,
+                      color: enabled
+                          ? AppColors.textSecondary
+                          : AppColors.textTertiary,
+                      height: 1.3,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+

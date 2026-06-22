@@ -18,6 +18,7 @@ class BillController extends GetxController {
   final isAnimating = false.obs;
   final lastVoteType = Rxn<VoteType>();
   final sceneStep = 0.obs;
+  final fastMode = false.obs;
 
   @override
   void onInit() {
@@ -53,9 +54,27 @@ class BillController extends GetxController {
 
   /// 법안 설명 장면을 배경 → 장점 → 부작용 → 표결 순서로 진행
   void nextScene() {
+    if (fastMode.value && sceneStep.value == 0) {
+      sceneStep.value = 3;
+      return;
+    }
     if (sceneStep.value < 3) {
       sceneStep.value++;
     }
+  }
+
+  void previousScene() {
+    if (sceneStep.value > 0) {
+      sceneStep.value--;
+    }
+  }
+
+  void skipToDecision() {
+    sceneStep.value = 3;
+  }
+
+  void toggleFastMode() {
+    fastMode.toggle();
   }
 
   /// O(찬성) 또는 X(반대) 선택
@@ -88,7 +107,7 @@ class BillController extends GetxController {
     );
 
     // 애니메이션 대기
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 900));
 
     isAnimating.value = false;
 

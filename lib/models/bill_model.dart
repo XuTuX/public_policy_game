@@ -8,6 +8,7 @@ class BillModel {
   final String proposer;
   final DateTime proposedDate;
   final LlmSummary? summary;
+  final BillNarrative? narrative;
   final int estimatedMinutes;
 
   const BillModel({
@@ -19,6 +20,7 @@ class BillModel {
     required this.proposer,
     required this.proposedDate,
     this.summary,
+    this.narrative,
     this.estimatedMinutes = 2,
   });
 
@@ -37,6 +39,9 @@ class BillModel {
       summary: json['summary'] != null
           ? LlmSummary.fromJson(json['summary'] as Map<String, dynamic>)
           : null,
+      narrative: json['narrative'] != null
+          ? BillNarrative.fromJson(json['narrative'] as Map<String, dynamic>)
+          : null,
       estimatedMinutes: json['estimatedMinutes'] as int? ?? 2,
     );
   }
@@ -52,6 +57,7 @@ class BillModel {
       'proposer': proposer,
       'proposedDate': proposedDate.toIso8601String(),
       'summary': summary?.toJson(),
+      'narrative': narrative?.toJson(),
       'estimatedMinutes': estimatedMinutes,
     };
   }
@@ -85,6 +91,43 @@ class BillModel {
   }
 }
 
+/// 게임 장면에 사용하는 법안별 상황형 대사와 핵심 영향
+class BillNarrative {
+  final String backgroundDialogue;
+  final String positiveDialogue;
+  final String concernDialogue;
+  final String positiveImpact;
+  final String concernImpact;
+
+  const BillNarrative({
+    required this.backgroundDialogue,
+    required this.positiveDialogue,
+    required this.concernDialogue,
+    required this.positiveImpact,
+    required this.concernImpact,
+  });
+
+  factory BillNarrative.fromJson(Map<String, dynamic> json) {
+    return BillNarrative(
+      backgroundDialogue: json['backgroundDialogue'] as String? ?? '',
+      positiveDialogue: json['positiveDialogue'] as String? ?? '',
+      concernDialogue: json['concernDialogue'] as String? ?? '',
+      positiveImpact: json['positiveImpact'] as String? ?? '',
+      concernImpact: json['concernImpact'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'backgroundDialogue': backgroundDialogue,
+      'positiveDialogue': positiveDialogue,
+      'concernDialogue': concernDialogue,
+      'positiveImpact': positiveImpact,
+      'concernImpact': concernImpact,
+    };
+  }
+}
+
 /// LLM 요약 모델
 class LlmSummary {
   final String background;
@@ -106,10 +149,6 @@ class LlmSummary {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'background': background,
-      'pros': pros,
-      'cons': cons,
-    };
+    return {'background': background, 'pros': pros, 'cons': cons};
   }
 }
