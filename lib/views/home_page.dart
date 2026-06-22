@@ -4,14 +4,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../controllers/home_controller.dart';
 import '../app/theme/app_colors.dart';
 import '../app/theme/app_text_styles.dart';
-import '../widgets/mission_card.dart';
 import '../widgets/level_indicator.dart';
 import '../widgets/badge_widget.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/app_error_widget.dart';
-import '../widgets/empty_widget.dart';
 
-/// 홈 페이지 — "오늘의 본회의"
+/// 홈 페이지 — 내러티브 인트로
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -23,7 +21,7 @@ class HomePage extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const LoadingWidget(message: '본회의를 준비하고 있습니다...');
+          return const LoadingWidget(message: '의원실에 출근 중입니다...');
         }
         if (controller.hasError.value) {
           return AppErrorWidget(
@@ -31,199 +29,159 @@ class HomePage extends StatelessWidget {
             onRetry: controller.onRefresh,
           );
         }
-        if (controller.bills.isEmpty) {
-          return const EmptyWidget(
-            title: '오늘의 법안이 없습니다',
-            subtitle: '내일 다시 확인해주세요!',
-            icon: Icons.event_busy_rounded,
-          );
-        }
 
-        return RefreshIndicator(
-          onRefresh: controller.onRefresh,
-          color: AppColors.primary,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            slivers: [
-              // ── Header ──
-              SliverToBoxAdapter(
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 상단 인사
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '오늘의 본회의 🏛️',
-                                  style: AppTextStyles.displayMedium,
-                                ).animate().fadeIn(duration: 400.ms),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '오늘 처리할 법안이 도착했습니다',
-                                  style: AppTextStyles.bodyMedium,
-                                ).animate().fadeIn(
-                                    delay: 200.ms, duration: 400.ms),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                // ── 상단 프로필 영역 ──
+                Obx(() => LevelIndicator(
+                      profile: controller.userProfile.value,
+                    )).animate().fadeIn(duration: 400.ms),
+                const SizedBox(height: 16),
 
-                        // ── 레벨 표시 ──
-                        Obx(() => LevelIndicator(
-                              profile: controller.userProfile.value,
-                            ))
-                            .animate()
-                            .fadeIn(delay: 300.ms, duration: 400.ms)
-                            .slideY(
-                                begin: 0.2,
-                                end: 0,
-                                delay: 300.ms,
-                                duration: 400.ms),
-                        const SizedBox(height: 16),
+                // ── 배지 영역 ──
+                Obx(() {
+                  final badges = controller.userProfile.value.badges;
+                  if (badges.isEmpty) return const SizedBox.shrink();
+                  return SizedBox(
+                    height: 90,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: badges.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        return BadgeWidget(badge: badges[index]);
+                      },
+                    ),
+                  );
+                }).animate().fadeIn(delay: 200.ms, duration: 400.ms),
 
-                        // ── 배지 ──
-                        Obx(() {
-                          final badges =
-                              controller.userProfile.value.badges;
-                          if (badges.isEmpty) return const SizedBox.shrink();
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '획득한 배지',
-                                style: AppTextStyles.titleLarge,
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                height: 90,
-                                child: ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: badges.length,
-                                  separatorBuilder: (context, index) =>
-                                      const SizedBox(width: 8),
-                                  itemBuilder: (context, index) {
-                                    return BadgeWidget(badge: badges[index]);
-                                  },
-                                ),
-                              ),
-                            ],
-                          );
-                        })
-                            .animate()
-                            .fadeIn(delay: 500.ms, duration: 400.ms),
-                        const SizedBox(height: 24),
+                const Spacer(flex: 1),
 
-                        // ── 오늘의 법안 제목 ──
-                        Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '오늘의 표결 미션',
-                              style: AppTextStyles.headlineMedium,
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.accentSurface,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${controller.billCount}개 · 약 ${controller.totalEstimatedMinutes}분',
-                                style: AppTextStyles.labelMedium.copyWith(
-                                  color: AppColors.accent,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ).animate().fadeIn(
-                            delay: 600.ms, duration: 400.ms),
-                        const SizedBox(height: 12),
-                      ],
+                // ── 게임 내러티브 일러스트 / 아이콘 ──
+                Center(
+                  child: Container(
+                    width: 160,
+                    height: 160,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceVariant.withValues(alpha: 0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Text(
+                        '💼',
+                        style: TextStyle(fontSize: 80),
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 400.ms, duration: 500.ms).scale(
+                        begin: const Offset(0.8, 0.8),
+                        end: const Offset(1.0, 1.0),
+                        delay: 400.ms,
+                        curve: Curves.easeOutBack,
+                      ),
+                ),
+
+                const Spacer(flex: 1),
+
+                // ── 대화형 UI ──
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.1),
                     ),
                   ),
-                ),
-              ),
-
-              // ── 법안 카드 리스트 ──
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                sliver: Obx(() => SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          return MissionCard(
-                            bill: controller.bills[index],
-                            index: index,
-                          )
-                              .animate()
-                              .fadeIn(
-                                delay: Duration(
-                                    milliseconds: 700 + (index * 80)),
-                                duration: 400.ms,
-                              )
-                              .slideY(
-                                begin: 0.15,
-                                end: 0,
-                                delay: Duration(
-                                    milliseconds: 700 + (index * 80)),
-                                duration: 400.ms,
-                              );
-                        },
-                        childCount: controller.bills.length,
-                      ),
-                    )),
-              ),
-
-              // ── 하단 여백 + CTA 버튼 ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: controller.startVoting,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          const Text(
-                            '🗳️',
-                            style: TextStyle(fontSize: 20),
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppColors.primarySurface,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child:
+                                  Text('👩‍💼', style: TextStyle(fontSize: 16)),
+                            ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 12),
                           Text(
-                            '표결 시작',
-                            style: AppTextStyles.buttonLarge,
+                            '수석 보좌관',
+                            style: AppTextStyles.labelLarge.copyWith(
+                              color: AppColors.primary,
+                            ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      Text(
+                        '"의원님, 출근하셨군요.\n오늘 본회의에서 처리하셔야 할 안건이 ${controller.billCount}건 올라와 있습니다.\n검토를 시작하시겠습니까?"',
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          height: 1.6,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                    .animate()
+                    .fadeIn(delay: 600.ms, duration: 500.ms)
+                    .slideY(begin: 0.1, end: 0, delay: 600.ms),
+
+                const SizedBox(height: 32),
+
+                // ── CTA 버튼 ──
+                SizedBox(
+                  width: double.infinity,
+                  height: 64,
+                  child: ElevatedButton(
+                    onPressed: controller.startVoting,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      elevation: 4,
+                      shadowColor: AppColors.primary.withValues(alpha: 0.4),
                     ),
-                  ).animate().fadeIn(delay: 1200.ms, duration: 400.ms),
-                ),
-              ),
-            ],
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '업무 시작하기',
+                          style: AppTextStyles.titleLarge.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward_rounded),
+                      ],
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 800.ms, duration: 500.ms),
+
+                const SizedBox(height: 32),
+              ],
+            ),
           ),
         );
       }),

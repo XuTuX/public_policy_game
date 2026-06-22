@@ -7,11 +7,12 @@ import '../../controllers/result_controller.dart';
 import '../../controllers/ranking_controller.dart';
 import '../../controllers/member_detail_controller.dart';
 import '../../views/onboarding_page.dart';
-import '../../views/home_page.dart';
+import '../../views/main_tab_page.dart';
 import '../../views/bill_page.dart';
 import '../../views/result_page.dart';
 import '../../views/ranking_page.dart';
 import '../../views/member_detail_page.dart';
+import '../../controllers/history_controller.dart';
 
 /// GetX 페이지 + 바인딩 설정
 class AppPages {
@@ -29,9 +30,10 @@ class AppPages {
     ),
     GetPage(
       name: AppRoutes.home,
-      page: () => const HomePage(),
+      page: () => const MainTabPage(),
       binding: BindingsBuilder(() {
         Get.lazyPut(() => HomeController());
+        Get.lazyPut(() => HistoryController());
       }),
       transition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 300),

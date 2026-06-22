@@ -58,9 +58,17 @@ class UserRepository {
     return getUserProfile();
   }
 
-  /// 표결 기록 저장
+  /// 표결 기록 저장 (누적)
   Future<void> saveVoteHistory(List<UserAnswerModel> answers) async {
-    await _storageService.saveVoteHistory(answers);
+    final existing = await getVoteHistory();
+    final Map<String, UserAnswerModel> merged = {};
+    for (final vote in existing) {
+      merged[vote.billId] = vote;
+    }
+    for (final vote in answers) {
+      merged[vote.billId] = vote;
+    }
+    await _storageService.saveVoteHistory(merged.values.toList());
   }
 
   /// 표결 기록 조회

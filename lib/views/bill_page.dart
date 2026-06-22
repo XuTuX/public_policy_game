@@ -5,17 +5,19 @@ import '../models/vote_model.dart';
 import '../app/theme/app_colors.dart';
 import '../app/theme/app_text_styles.dart';
 import '../app/constants/app_constants.dart';
-import '../widgets/progress_header.dart';
-import '../widgets/summary_card.dart';
+import '../widgets/bill_story_scene.dart';
 import '../widgets/loading_widget.dart';
+import '../widgets/narrative_vote_button.dart';
 
-/// 법안 미션(표결) 화면
+/// 법안 미션 화면 — 배경, 장점, 부작용을 순서대로 체험한 뒤 표결한다.
 class BillPage extends StatelessWidget {
   const BillPage({super.key});
 
+  static const _stepLabels = ['배경', '장점', '부작용', '결정'];
+
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(BillController());
+    final controller = Get.find<BillController>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -25,14 +27,17 @@ class BillPage extends StatelessWidget {
           icon: const Icon(Icons.close_rounded),
           onPressed: () => _showExitDialog(context),
         ),
-        title: Obx(() => Text(
-              '법안 표결',
-              style: AppTextStyles.headlineSmall,
-            )),
+        title: Obx(
+          () => Text(
+            '법안 ${controller.progressText}',
+            style: AppTextStyles.headlineSmall,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const LoadingWidget(message: '법안을 불러오고 있습니다...');
+          return const LoadingWidget(message: '법안 서류를 준비 중입니다...');
         }
 
         final bill = controller.currentBill;
@@ -40,143 +45,39 @@ class BillPage extends StatelessWidget {
           return const Center(child: Text('법안이 없습니다'));
         }
 
+        final step = controller.sceneStep.value;
+
         return Column(
           children: [
-            // ── 진행률 ──
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Obx(() => ProgressHeader(
-                    current: controller.currentIndex.value + 1,
-                    total: controller.bills.length,
-                    progress: controller.progress,
-                  )),
-            ),
-
-            // ── 법안 내용 (스크롤) ──
+            _SceneProgress(currentStep: step),
             Expanded(
-              child: Obx(() {
-                final currentBill = controller.currentBill;
-                if (currentBill == null) return const SizedBox.shrink();
-
-                return AnimatedSwitcher(
-                  duration: AppConstants.animNormal,
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0.05, 0),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: SingleChildScrollView(
-                    key: ValueKey(currentBill.id),
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 카테고리 + 상태
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primarySurface,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${currentBill.categoryEmoji} ${currentBill.category}',
-                                style: AppTextStyles.labelMedium.copyWith(
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              currentBill.status,
-                              style: AppTextStyles.caption.copyWith(
-                                color: AppColors.accent,
-                              ),
-                            ),
-                          ],
+              child: AnimatedSwitcher(
+                duration: AppConstants.animNormal,
+                transitionBuilder: (child, animation) {
+                  final offset =
+                      Tween<Offset>(
+                        begin: const Offset(0.08, 0),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutCubic,
                         ),
-                        const SizedBox(height: 12),
-
-                        // 법안 제목
-                        Text(
-                          currentBill.billName,
-                          style: AppTextStyles.headlineLarge,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          currentBill.proposer,
-                          style: AppTextStyles.bodySmall,
-                        ),
-                        const SizedBox(height: 24),
-
-                        // AI 요약 카드들
-                        if (currentBill.summary != null) ...[
-                          SummaryCard.background(
-                              currentBill.summary!.background),
-                          SummaryCard.pros(currentBill.summary!.pros),
-                          SummaryCard.cons(currentBill.summary!.cons),
-                        ],
-                      ],
-                    ),
-                  ),
-                );
-              }),
-            ),
-
-            // ── 투표 버튼 ──
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
+                      );
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(position: offset, child: child),
+                  );
+                },
+                child: SingleChildScrollView(
+                  key: ValueKey('${bill.id}-$step'),
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                  child: BillStoryScene(bill: bill, step: step),
+                ),
               ),
-              child: Obx(() {
-                final isAnimating = controller.isAnimating.value;
-                final lastVote = controller.lastVoteType.value;
-
-                return Row(
-                  children: [
-                    // 찬성 버튼
-                    Expanded(
-                      child: _VoteActionButton(
-                        voteType: VoteType.yes,
-                        enabled: !isAnimating,
-                        isSelected: isAnimating && lastVote == VoteType.yes,
-                        onPressed: () => controller.vote(VoteType.yes),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // 반대 버튼
-                    Expanded(
-                      child: _VoteActionButton(
-                        voteType: VoteType.no,
-                        enabled: !isAnimating,
-                        isSelected: isAnimating && lastVote == VoteType.no,
-                        onPressed: () => controller.vote(VoteType.no),
-                      ),
-                    ),
-                  ],
-                );
-              }),
             ),
+            _ActionPanel(controller: controller, step: step),
           ],
         );
       }),
@@ -187,25 +88,22 @@ class BillPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('표결 중단', style: AppTextStyles.headlineMedium),
+        title: Text('업무 중단', style: AppTextStyles.headlineMedium),
         content: Text(
-          '지금 나가면 진행 상황이 저장되지 않습니다.\n정말 나가시겠습니까?',
+          '지금 퇴근하시면 작성 중이던 서류가 저장되지 않습니다.\n정말 퇴근하시겠습니까?',
           style: AppTextStyles.bodyMedium,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('계속하기'),
+            child: const Text('계속 일하기'),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               Get.back();
             },
-            child: Text(
-              '나가기',
-              style: TextStyle(color: AppColors.error),
-            ),
+            child: Text('퇴근하기', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -213,117 +111,222 @@ class BillPage extends StatelessWidget {
   }
 }
 
-/// 투표 액션 버튼 (애니메이션 포함)
-class _VoteActionButton extends StatefulWidget {
-  final VoteType voteType;
-  final bool enabled;
-  final bool isSelected;
+class _SceneProgress extends StatelessWidget {
+  final int currentStep;
+
+  const _SceneProgress({required this.currentStep});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.surface,
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
+      child: Row(
+        children: List.generate(BillPage._stepLabels.length, (index) {
+          final isCompleted = index < currentStep;
+          final isCurrent = index == currentStep;
+          final color = isCompleted || isCurrent
+              ? AppColors.primary
+              : AppColors.divider;
+
+          return Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      AnimatedContainer(
+                        duration: AppConstants.animFast,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        BillPage._stepLabels[index],
+                        style: AppTextStyles.caption.copyWith(
+                          color: isCurrent
+                              ? AppColors.primary
+                              : isCompleted
+                              ? AppColors.textSecondary
+                              : AppColors.textTertiary,
+                          fontWeight: isCurrent
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (index < BillPage._stepLabels.length - 1)
+                  const SizedBox(width: 6),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _ActionPanel extends StatelessWidget {
+  final BillController controller;
+  final int step;
+
+  const _ActionPanel({required this.controller, required this.step});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 16, 20, step == 3 ? 24 : 28),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: AnimatedSwitcher(
+        duration: AppConstants.animNormal,
+        child: step < 3
+            ? _NextSceneButton(
+                key: ValueKey('next-$step'),
+                step: step,
+                onPressed: controller.nextScene,
+              )
+            : _VoteChoices(
+                key: const ValueKey('vote-choices'),
+                controller: controller,
+              ),
+      ),
+    );
+  }
+}
+
+class _NextSceneButton extends StatelessWidget {
+  final int step;
   final VoidCallback onPressed;
 
-  const _VoteActionButton({
-    required this.voteType,
-    required this.enabled,
-    required this.isSelected,
+  const _NextSceneButton({
+    super.key,
+    required this.step,
     required this.onPressed,
   });
 
-  @override
-  State<_VoteActionButton> createState() => _VoteActionButtonState();
-}
-
-class _VoteActionButtonState extends State<_VoteActionButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 120),
-    );
-    _scaleAnim = Tween<double>(begin: 1.0, end: 0.93).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+  String get label {
+    switch (step) {
+      case 0:
+        return '장점이 나타난 현장 보기';
+      case 1:
+        return '부작용이 생긴 현장도 보기';
+      default:
+        return '이제 표결하러 가기';
+    }
   }
 
-  @override
-  void didUpdateWidget(covariant _VoteActionButton oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isSelected && !oldWidget.isSelected) {
-      _controller.forward().then((_) => _controller.reverse());
+  String get helper {
+    switch (step) {
+      case 0:
+        return '법안이 왜 필요한지 확인했습니다';
+      case 1:
+        return '기대되는 변화를 확인했습니다';
+      default:
+        return '우려되는 점까지 모두 확인했습니다';
     }
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  bool get _isYes => widget.voteType == VoteType.yes;
-  Color get _color => _isYes ? AppColors.voteYes : AppColors.voteNo;
-  Color get _bgColor => _isYes ? AppColors.voteYesBg : AppColors.voteNoBg;
-
-  @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scaleAnim,
-      child: GestureDetector(
-        onTapDown: (_) {
-          if (widget.enabled) _controller.forward();
-        },
-        onTapUp: (_) {
-          if (widget.enabled) {
-            _controller.reverse();
-            widget.onPressed();
-          }
-        },
-        onTapCancel: () {
-          _controller.reverse();
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          height: 72,
-          decoration: BoxDecoration(
-            color: widget.isSelected ? _color : _bgColor,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: _color.withValues(alpha: widget.enabled ? 0.4 : 0.15),
-              width: 2,
+    return Column(
+      key: const Key('story_next_panel'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(helper, style: AppTextStyles.caption),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: ElevatedButton(
+            key: const Key('story_next_button'),
+            onPressed: onPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
-            boxShadow: widget.isSelected
-                ? [
-                    BoxShadow(
-                      color: _color.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  _isYes ? '⭕' : '❌',
-                  style: const TextStyle(fontSize: 26),
-                ),
+                Text(label, style: AppTextStyles.buttonLarge),
                 const SizedBox(width: 8),
-                Text(
-                  _isYes ? '찬성' : '반대',
-                  style: AppTextStyles.headlineMedium.copyWith(
-                    color: widget.isSelected ? Colors.white : _color,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                const Icon(Icons.arrow_forward_rounded, size: 20),
               ],
             ),
           ),
         ),
-      ),
+      ],
     );
+  }
+}
+
+class _VoteChoices extends StatelessWidget {
+  final BillController controller;
+
+  const _VoteChoices({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final isAnimating = controller.isAnimating.value;
+      final lastVote = controller.lastVoteType.value;
+
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              const Text('👩‍💼', style: TextStyle(fontSize: 24)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '의원님, 최종 의견을 선택해주세요.',
+                  style: AppTextStyles.titleMedium,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          NarrativeVoteButton(
+            voteType: VoteType.yes,
+            text: '기대 효과가 더 크다 (찬성)',
+            enabled: !isAnimating,
+            isSelected: isAnimating && lastVote == VoteType.yes,
+            onPressed: () => controller.vote(VoteType.yes),
+          ),
+          NarrativeVoteButton(
+            voteType: VoteType.abstain,
+            text: '아직 판단하기 어렵다 (기권)',
+            enabled: !isAnimating,
+            isSelected: isAnimating && lastVote == VoteType.abstain,
+            onPressed: () => controller.vote(VoteType.abstain),
+          ),
+          NarrativeVoteButton(
+            voteType: VoteType.no,
+            text: '부작용 우려가 더 크다 (반대)',
+            enabled: !isAnimating,
+            isSelected: isAnimating && lastVote == VoteType.no,
+            onPressed: () => controller.vote(VoteType.no),
+          ),
+        ],
+      );
+    });
   }
 }

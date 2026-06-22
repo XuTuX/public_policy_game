@@ -1,25 +1,16 @@
-import 'package:dio/dio.dart';
 import '../app/constants/app_constants.dart';
 import '../models/bill_model.dart';
+import 'http_service.dart';
 
 /// LLM 법안 요약 서비스
 /// 현재: Mock 데이터 반환
 /// 향후: OpenAI API 또는 Gemini API 연동
 class LlmSummaryService {
   // ignore: unused_field
-  final Dio _dio;
+  final HttpService _httpService;
 
-  LlmSummaryService({Dio? dio})
-      : _dio = dio ??
-            Dio(BaseOptions(
-              baseUrl: AppConstants.llmApiBaseUrl,
-              connectTimeout: const Duration(seconds: 30),
-              receiveTimeout: const Duration(seconds: 30),
-              headers: {
-                'Authorization': 'Bearer ${AppConstants.llmApiKey}',
-                'Content-Type': 'application/json',
-              },
-            ));
+  LlmSummaryService({HttpService? httpService})
+      : _httpService = httpService ?? HttpService();
 
   /// 법안 원문을 요약하여 LlmSummary 반환
   /// [billContent] 법안 원문 텍스트

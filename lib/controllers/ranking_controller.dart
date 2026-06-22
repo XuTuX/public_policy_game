@@ -13,6 +13,10 @@ class RankingController extends GetxController {
   final isLoading = true.obs;
   final hasError = false.obs;
 
+  // ── 필터링 & 검색 상태 ──
+  final searchQuery = ''.obs;
+  final selectedParty = '전체'.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -37,7 +41,30 @@ class RankingController extends GetxController {
     }
   }
 
-  /// 1위 의원
+  /// 검색과 정당 칩 필터링이 모두 적용된 최종 의원 목록
+  List<AssemblyMemberModel> get filteredMembers {
+    return rankedMembers.where((member) {
+      final matchesQuery = searchQuery.value.isEmpty ||
+          member.name.contains(searchQuery.value) ||
+          member.district.contains(searchQuery.value);
+
+      final matchesParty = selectedParty.value == '전체' ||
+          member.party == selectedParty.value;
+
+      return matchesQuery && matchesParty;
+    }).toList();
+  }
+
+  /// 고유 정당 목록 도출
+  List<String> get parties {
+    final list = <String>['전체'];
+    final uniqueParties = rankedMembers.map((m) => m.party).toSet().toList();
+    uniqueParties.sort();
+    list.addAll(uniqueParties);
+    return list;
+  }
+
+  /// 전체 1위 의원 (필터링과 무관하게 원본 1위 유지)
   AssemblyMemberModel? get topMember =>
       rankedMembers.isNotEmpty ? rankedMembers.first : null;
 

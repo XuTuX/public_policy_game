@@ -1,22 +1,17 @@
-import 'package:dio/dio.dart';
 import '../app/constants/app_constants.dart';
 import '../models/bill_model.dart';
 import '../data/mock/mock_bills.dart';
+import 'http_service.dart';
 
 /// 의안정보 API 서비스
 /// 현재: Mock 데이터 반환
 /// 향후: 국회 공공데이터 의안정보 API 연동
 class BillApiService {
   // ignore: unused_field  // 향후 실제 API 연동 시 사용
-  final Dio _dio;
+  final HttpService _httpService;
 
-  BillApiService({Dio? dio})
-      : _dio = dio ??
-            Dio(BaseOptions(
-              baseUrl: AppConstants.billApiBaseUrl,
-              connectTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
-            ));
+  BillApiService({HttpService? httpService})
+      : _httpService = httpService ?? HttpService();
 
   /// 법안 목록 조회
   Future<List<BillModel>> fetchBills({

@@ -17,6 +17,7 @@ class BillController extends GetxController {
   final isLoading = true.obs;
   final isAnimating = false.obs;
   final lastVoteType = Rxn<VoteType>();
+  final sceneStep = 0.obs;
 
   @override
   void onInit() {
@@ -45,12 +46,17 @@ class BillController extends GetxController {
       bills.isEmpty ? 0.0 : (currentIndex.value + 1) / bills.length;
 
   /// 진행률 텍스트 (예: "3 / 10")
-  String get progressText =>
-      '${currentIndex.value + 1} / ${bills.length}';
+  String get progressText => '${currentIndex.value + 1} / ${bills.length}';
 
   /// 남은 법안 수
-  int get remainingBills =>
-      bills.length - currentIndex.value - 1;
+  int get remainingBills => bills.length - currentIndex.value - 1;
+
+  /// 법안 설명 장면을 배경 → 장점 → 부작용 → 표결 순서로 진행
+  void nextScene() {
+    if (sceneStep.value < 3) {
+      sceneStep.value++;
+    }
+  }
 
   /// O(찬성) 또는 X(반대) 선택
   Future<void> vote(VoteType voteType) async {
@@ -71,13 +77,15 @@ class BillController extends GetxController {
     }
 
     // 응답 저장
-    answers.add(UserAnswerModel(
-      visitorId: 'local_user',
-      billId: currentBill!.id,
-      billName: currentBill!.billName,
-      answer: voteType,
-      answeredAt: DateTime.now(),
-    ));
+    answers.add(
+      UserAnswerModel(
+        visitorId: 'local_user',
+        billId: currentBill!.id,
+        billName: currentBill!.billName,
+        answer: voteType,
+        answeredAt: DateTime.now(),
+      ),
+    );
 
     // 애니메이션 대기
     await Future.delayed(const Duration(milliseconds: 600));
@@ -86,6 +94,7 @@ class BillController extends GetxController {
 
     // 다음 법안 또는 결과 화면으로
     if (currentIndex.value < bills.length - 1) {
+      sceneStep.value = 0;
       currentIndex.value++;
     } else {
       // 모든 법안 완료 → 결과 화면
@@ -94,10 +103,8 @@ class BillController extends GetxController {
   }
 
   /// 찬성 수
-  int get yesCount =>
-      answers.where((a) => a.answer == VoteType.yes).length;
+  int get yesCount => answers.where((a) => a.answer == VoteType.yes).length;
 
   /// 반대 수
-  int get noCount =>
-      answers.where((a) => a.answer == VoteType.no).length;
+  int get noCount => answers.where((a) => a.answer == VoteType.no).length;
 }

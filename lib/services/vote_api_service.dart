@@ -1,24 +1,19 @@
-import 'package:dio/dio.dart';
 import '../app/constants/app_constants.dart';
 import '../models/vote_model.dart';
 import '../models/assembly_member_model.dart';
 import '../data/mock/mock_votes.dart';
 import '../data/mock/mock_members.dart';
+import 'http_service.dart';
 
 /// 국회의원 본회의 표결정보 API 서비스
 /// 현재: Mock 데이터 반환
 /// 향후: 국회 공공데이터 표결정보 API 연동
 class VoteApiService {
   // ignore: unused_field
-  final Dio _dio;
+  final HttpService _httpService;
 
-  VoteApiService({Dio? dio})
-      : _dio = dio ??
-            Dio(BaseOptions(
-              baseUrl: AppConstants.voteApiBaseUrl,
-              connectTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
-            ));
+  VoteApiService({HttpService? httpService})
+      : _httpService = httpService ?? HttpService();
 
   /// 특정 법안의 표결 데이터 조회
   Future<List<VoteModel>> fetchVotesByBillId(String billId) async {

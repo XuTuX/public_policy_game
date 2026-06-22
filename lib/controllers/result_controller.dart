@@ -1,65 +1,100 @@
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/user_answer_model.dart';
 import '../models/vote_model.dart';
-import '../repositories/user_repository.dart';
 import '../app/routes/app_routes.dart';
+import '../repositories/user_repository.dart';
+import '../repositories/bill_repository.dart';
 
 /// 결과 화면 컨트롤러
 class ResultController extends GetxController {
   final UserRepository _userRepository = UserRepository();
+  final BillRepositoryImpl _billRepository = BillRepositoryImpl();
+
+  late final List<UserAnswerModel> answers;
 
   // ── Observable State ──
-  final answers = <UserAnswerModel>[].obs;
-  final isLoading = true.obs;
+  final categoryStats = <String, double>{}.obs; // 카테고리 -> 찬성 비율 (0.0 ~ 1.0)
+  final isStatsLoading = true.obs;
 
   @override
   void onInit() {
     super.onInit();
-    final args = Get.arguments;
-    if (args is List<UserAnswerModel>) {
-      answers.value = args;
+    if (Get.arguments is List<UserAnswerModel>) {
+      answers = Get.arguments as List<UserAnswerModel>;
+    } else if (Get.arguments is List) {
+      answers = (Get.arguments as List).cast<UserAnswerModel>();
+    } else {
+      answers = <UserAnswerModel>[];
     }
-    _saveResults();
+
+    _saveAndCalculateStats();
   }
 
-  /// 결과 저장
-  Future<void> _saveResults() async {
+  /// 결과 영구 저장 및 카테고리별 찬성 경향 분석
+  Future<void> _saveAndCalculateStats() async {
     try {
-      isLoading.value = true;
-      await _userRepository.saveVoteHistory(answers);
-      await _userRepository.updateAfterVoting(answers.length);
+      isStatsLoading.value = true;
+
+      // 1. 로컬 저장소에 표결 결과 누적 저장 및 레벨/배지 갱신
+      if (answers.isNotEmpty) {
+        await _userRepository.saveVoteHistory(answers);
+        await _userRepository.updateAfterVoting(answers.length);
+      }
+
+      // 2. 카테고리 통계 빌드
+      final bills = await _billRepository.getBills();
+      final Map<String, List<VoteType>> categoryVotes = {};
+
+      for (final answer in answers) {
+        final bill = bills.where((b) => b.id == answer.billId).firstOrNull;
+        if (bill != null) {
+          categoryVotes.putIfAbsent(bill.category, () => []).add(answer.answer);
+        }
+      }
+
+      final Map<String, double> stats = {};
+      categoryVotes.forEach((category, votes) {
+        final total = votes.length;
+        final yesCount = votes.where((v) => v == VoteType.yes).length;
+        stats[category] = total > 0 ? yesCount / total : 0.0;
+      });
+
+      categoryStats.value = stats;
     } catch (e) {
-      // 저장 실패 시에도 결과는 보여줌
+      // 로깅 실패 무시
     } finally {
-      isLoading.value = false;
+      isStatsLoading.value = false;
     }
   }
 
-  /// 총 참여 법안 수
   int get totalBills => answers.length;
 
-  /// 찬성 수
-  int get yesCount =>
-      answers.where((a) => a.answer == VoteType.yes).length;
+  int get yesCount => answers.where((a) => a.answer == VoteType.yes).length;
 
-  /// 반대 수
-  int get noCount =>
-      answers.where((a) => a.answer == VoteType.no).length;
+  int get noCount => answers.where((a) => a.answer == VoteType.no).length;
 
-  /// 찬성 비율 (0.0 ~ 1.0)
-  double get yesRatio =>
-      totalBills > 0 ? yesCount / totalBills : 0.0;
+  int get abstainCount =>
+      answers.where((a) => a.answer == VoteType.abstain).length;
 
-  /// 반대 비율 (0.0 ~ 1.0)
-  double get noRatio =>
-      totalBills > 0 ? noCount / totalBills : 0.0;
+  double get yesRatio => totalBills > 0 ? yesCount / totalBills : 0.0;
+  double get noRatio => totalBills > 0 ? noCount / totalBills : 0.0;
+  double get abstainRatio => totalBills > 0 ? abstainCount / totalBills : 0.0;
 
-  /// 나와 비슷한 의원 찾기
-  void goToRanking() {
-    Get.toNamed(AppRoutes.ranking, arguments: answers.toList());
+  /// 결과 SNS 공유
+  Future<void> shareResult() async {
+    final text = '🗳️ [오늘부터 국회의원] 나의 의정 활동 결과!\n\n'
+        '• 찬성: $yesCount건\n'
+        '• 반대: $noCount건\n'
+        '• 기권: $abstainCount건\n\n'
+        '나와 가장 잘 맞는 정치 소울메이트 국회의원과 가치관 유형이 궁금하다면 지금 참여해보세요! 👉 https://assembly-game.com';
+    await Share.share(text);
   }
 
-  /// 홈으로 돌아가기
+  void goToRanking() {
+    Get.toNamed(AppRoutes.ranking, arguments: answers);
+  }
+
   void goHome() {
     Get.offAllNamed(AppRoutes.home);
   }
