@@ -30,20 +30,8 @@ class AppConstants {
   // ── Pagination ──
   static const int defaultPageSize = 10;
 
-  // ── Level System ──
-  static const List<LevelInfo> levels = [
-    LevelInfo(level: 1, title: '시민', requiredVotes: 0, emoji: '👤'),
-    LevelInfo(level: 2, title: '예비의원', requiredVotes: 10, emoji: '📋'),
-    LevelInfo(level: 3, title: '초선의원', requiredVotes: 30, emoji: '🏛️'),
-    LevelInfo(level: 4, title: '재선의원', requiredVotes: 60, emoji: '⭐'),
-    LevelInfo(level: 5, title: '원내대표', requiredVotes: 100, emoji: '👑'),
-  ];
-
-  // ── SharedPreferences Keys ──
   static const String keyOnboardingCompleted = 'onboarding_completed';
   static const String keyTotalVotes = 'total_votes';
-  static const String keyUserLevel = 'user_level';
-  static const String keyBadges = 'badges';
   static const String keyVoteHistory = 'vote_history';
 
   // ── Animation Durations ──
@@ -85,19 +73,4 @@ class AppConstants {
           offset: Offset(0, 8),
         ),
       ];
-}
-
-/// 레벨 정보 클래스
-class LevelInfo {
-  final int level;
-  final String title;
-  final int requiredVotes;
-  final String emoji;
-
-  const LevelInfo({
-    required this.level,
-    required this.title,
-    required this.requiredVotes,
-    required this.emoji,
-  });
 }

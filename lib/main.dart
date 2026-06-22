@@ -6,6 +6,7 @@ import 'app/routes/app_routes.dart';
 import 'app/routes/app_pages.dart';
 import 'app/constants/app_constants.dart';
 import 'services/local_storage_service.dart';
+import 'widgets/web_responsive_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +42,9 @@ class MyApp extends StatelessWidget {
       getPages: AppPages.pages,
       defaultTransition: Transition.cupertino,
       transitionDuration: AppConstants.animPageTransition,
+      builder: (context, child) {
+        return WebResponsiveWrapper(child: child ?? const SizedBox.shrink());
+      },
     );
   }
 }

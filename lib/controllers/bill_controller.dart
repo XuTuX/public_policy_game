@@ -17,8 +17,6 @@ class BillController extends GetxController {
   final isLoading = true.obs;
   final isAnimating = false.obs;
   final lastVoteType = Rxn<VoteType>();
-  final sceneStep = 0.obs;
-  final fastMode = false.obs;
 
   @override
   void onInit() {
@@ -51,31 +49,6 @@ class BillController extends GetxController {
 
   /// 남은 법안 수
   int get remainingBills => bills.length - currentIndex.value - 1;
-
-  /// 법안 설명 장면을 배경 → 장점 → 부작용 → 표결 순서로 진행
-  void nextScene() {
-    if (fastMode.value && sceneStep.value == 0) {
-      sceneStep.value = 3;
-      return;
-    }
-    if (sceneStep.value < 3) {
-      sceneStep.value++;
-    }
-  }
-
-  void previousScene() {
-    if (sceneStep.value > 0) {
-      sceneStep.value--;
-    }
-  }
-
-  void skipToDecision() {
-    sceneStep.value = 3;
-  }
-
-  void toggleFastMode() {
-    fastMode.toggle();
-  }
 
   /// O(찬성) 또는 X(반대) 선택
   Future<void> vote(VoteType voteType) async {
@@ -113,7 +86,6 @@ class BillController extends GetxController {
 
     // 다음 법안 또는 결과 화면으로
     if (currentIndex.value < bills.length - 1) {
-      sceneStep.value = 0;
       currentIndex.value++;
     } else {
       // 모든 법안 완료 → 결과 화면

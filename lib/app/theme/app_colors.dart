@@ -52,7 +52,7 @@ class AppColors {
   static const Color shadow = Color(0x1A000000);
   static const Color shimmer = Color(0xFFE2E8F0);
 
-  // ── Badge / Level Colors ──
+  // ── Rank Colors ──
   static const Color gold = Color(0xFFF59E0B);
   static const Color silver = Color(0xFF94A3B8);
   static const Color bronze = Color(0xFFD97706);

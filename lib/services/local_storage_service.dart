@@ -54,32 +54,6 @@ class LocalStorageService {
     await prefs.setInt(AppConstants.keyTotalVotes, count);
   }
 
-  Future<int> getUserLevel() async {
-    final prefs = await _preferences;
-    return prefs.getInt(AppConstants.keyUserLevel) ?? 1;
-  }
-
-  Future<void> setUserLevel(int level) async {
-    final prefs = await _preferences;
-    await prefs.setInt(AppConstants.keyUserLevel, level);
-  }
-
-  // ── 배지 ──
-
-  Future<List<String>> getUnlockedBadgeIds() async {
-    final prefs = await _preferences;
-    return prefs.getStringList(AppConstants.keyBadges) ?? [];
-  }
-
-  Future<void> unlockBadge(String badgeId) async {
-    final prefs = await _preferences;
-    final badges = prefs.getStringList(AppConstants.keyBadges) ?? [];
-    if (!badges.contains(badgeId)) {
-      badges.add(badgeId);
-      await prefs.setStringList(AppConstants.keyBadges, badges);
-    }
-  }
-
   // ── 전체 초기화 ──
 
   Future<void> clearAll() async {

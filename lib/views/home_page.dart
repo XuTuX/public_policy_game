@@ -4,8 +4,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../controllers/home_controller.dart';
 import '../app/theme/app_colors.dart';
 import '../app/theme/app_text_styles.dart';
-import '../widgets/level_indicator.dart';
-import '../widgets/badge_widget.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/app_error_widget.dart';
 
@@ -37,30 +35,6 @@ class HomePage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                // ── 상단 프로필 영역 ──
-                Obx(() => LevelIndicator(
-                      profile: controller.userProfile.value,
-                    )).animate().fadeIn(duration: 400.ms),
-                const SizedBox(height: 16),
-
-                // ── 배지 영역 ──
-                Obx(() {
-                  final badges = controller.userProfile.value.badges;
-                  if (badges.isEmpty) return const SizedBox.shrink();
-                  return SizedBox(
-                    height: 90,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: badges.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        return BadgeWidget(badge: badges[index]);
-                      },
-                    ),
-                  );
-                }).animate().fadeIn(delay: 200.ms, duration: 400.ms),
-
                 const Spacer(flex: 1),
 
                 // ── 게임 내러티브 일러스트 / 아이콘 ──
@@ -89,57 +63,86 @@ class HomePage extends StatelessWidget {
                 const Spacer(flex: 1),
 
                 // ── 대화형 UI ──
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.cardBackground,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.05),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 프로필 아바타
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySurface,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.1)),
                       ),
-                    ],
-                    border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      child: const Center(
+                        child: Text('👩‍💼', style: TextStyle(fontSize: 24)),
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                    const SizedBox(width: 16),
+                    // 이름 및 대화 말풍선
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: AppColors.primarySurface,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Center(
-                              child:
-                                  Text('👩‍💼', style: TextStyle(fontSize: 16)),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
                           Text(
                             '수석 보좌관',
                             style: AppTextStyles.labelLarge.copyWith(
-                              color: AppColors.primary,
+                              color: AppColors.primaryDark,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 18),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: const BorderRadius.only(
+                                topRight: Radius.circular(20),
+                                bottomLeft: Radius.circular(20),
+                                bottomRight: Radius.circular(20),
+                                topLeft: Radius.circular(4), // 말풍선 꼬리 느낌
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      AppColors.primary.withValues(alpha: 0.08),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                              border: Border.all(
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.1),
+                              ),
+                            ),
+                            child: RichText(
+                              text: TextSpan(
+                                style: AppTextStyles.bodyLarge.copyWith(
+                                  height: 1.6,
+                                  color: AppColors.textPrimary,
+                                  letterSpacing: -0.3,
+                                ),
+                                children: [
+                                  const TextSpan(text: '의원님, 출근하셨군요.\n오늘 본회의에서 처리하셔야 할 안건이 '),
+                                  TextSpan(
+                                    text: '${controller.billCount}건',
+                                    style: const TextStyle(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const TextSpan(text: ' 올라와 있습니다.\n검토를 시작하시겠습니까?'),
+                                ],
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '"의원님, 출근하셨군요.\n오늘 본회의에서 처리하셔야 할 안건이 ${controller.billCount}건 올라와 있습니다.\n검토를 시작하시겠습니까?"',
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          height: 1.6,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 )
                     .animate()
                     .fadeIn(delay: 600.ms, duration: 500.ms)
