@@ -1,17 +1,24 @@
-# public_policy_game
+# 오늘부터 국회의원
 
-A new Flutter project.
+실제 국회 법안을 쉽게 살펴보고 직접 표결하며, 나와 의견이 비슷한 국회의원을 찾아보는 Flutter 앱입니다. 현재 저장소의 데이터/API 구현은 Mock 모드입니다.
 
-## Getting Started
+## 로컬 실행
 
-This project is a starting point for a Flutter application.
+```bash
+flutter pub get
+flutter run -d chrome
+```
 
-A few resources to get you started if this is your first Flutter project:
+## 웹 릴리스 빌드
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+`--dart-define`은 브라우저에 공개되어도 되는 값에만 사용합니다.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# public_policy_game
+```bash
+flutter build web --release \
+  --dart-define=USE_MOCK_DATA=true \
+  --dart-define=PUBLIC_APP_URL=https://example.com
+```
+
+빌드 결과는 `build/web`에 생성됩니다. 하위 경로에 배포할 때는 `--base-href=/경로/`를 추가합니다.
+
+실제 배포 준비 상태와 후속 작업은 [웹 배포 체크리스트](docs/WEB_DEPLOYMENT_CHECKLIST.md)를 확인하세요.

@@ -8,20 +8,14 @@ class RadarChart extends StatelessWidget {
   final Map<String, double> stats; // 카테고리명 -> 0.0 ~ 1.0 찬성 비율
   final double size;
 
-  const RadarChart({
-    super.key,
-    required this.stats,
-    this.size = 240,
-  });
+  const RadarChart({super.key, required this.stats, this.size = 240});
 
   @override
   Widget build(BuildContext context) {
     if (stats.isEmpty) {
       return SizedBox(
         height: size,
-        child: const Center(
-          child: Text('충분한 통계 데이터가 없습니다.'),
-        ),
+        child: const Center(child: Text('충분한 통계 데이터가 없습니다.')),
       );
     }
 
@@ -33,10 +27,7 @@ class RadarChart extends StatelessWidget {
       height: size,
       padding: const EdgeInsets.all(16),
       child: CustomPaint(
-        painter: RadarChartPainter(
-          categories: categories,
-          values: values,
-        ),
+        painter: RadarChartPainter(categories: categories, values: values),
       ),
     );
   }
@@ -46,10 +37,7 @@ class RadarChartPainter extends CustomPainter {
   final List<String> categories;
   final List<double> values;
 
-  RadarChartPainter({
-    required this.categories,
-    required this.values,
-  });
+  RadarChartPainter({required this.categories, required this.values});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -104,7 +92,7 @@ class RadarChartPainter extends CustomPainter {
         center.dx + radius * cos(angle),
         center.dy + radius * sin(angle),
       );
-      
+
       // 중심에서 바깥쪽으로 뻗는 축선
       canvas.drawLine(center, outerPoint, axisPaint);
 
@@ -136,7 +124,8 @@ class RadarChartPainter extends CustomPainter {
     final valPath = Path();
     for (int i = 0; i < count; i++) {
       final angle = i * angleStep - pi / 2;
-      final valRadius = radius * values[i].clamp(0.05, 1.0); // 완전히 0이면 그리기가 어려우므로 최소값 부여
+      final valRadius =
+          radius * values[i].clamp(0.05, 1.0); // 완전히 0이면 그리기가 어려우므로 최소값 부여
       final point = Offset(
         center.dx + valRadius * cos(angle),
         center.dy + valRadius * sin(angle),

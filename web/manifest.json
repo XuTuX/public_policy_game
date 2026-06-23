@@ -1,11 +1,12 @@
 {
-    "name": "public_policy_game",
-    "short_name": "public_policy_game",
+    "id": "./",
+    "name": "오늘부터 국회의원",
+    "short_name": "오늘부터 국회의원",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F8FAFC",
+    "theme_color": "#4F46E5",
+    "description": "국회 법안을 살펴보고 직접 표결하는 참여형 웹 게임",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

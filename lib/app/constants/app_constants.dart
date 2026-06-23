@@ -17,15 +17,18 @@ class AppConstants {
   static const String voteApiBaseUrl =
       'https://open.assembly.go.kr/portal/openapi';
 
-  /// LLM Summary API (향후 연동)
-  static const String llmApiBaseUrl = 'https://api.openai.com/v1';
+  // ── Public build configuration ──
+  // Flutter Web의 dart-define 값은 빌드 결과물에서 확인할 수 있으므로
+  // 비밀키가 아닌 공개 설정만 선언한다.
+  static const bool useMockData = bool.fromEnvironment(
+    'USE_MOCK_DATA',
+    defaultValue: true,
+  );
 
-  // ── API Keys (향후 환경변수로 분리) ──
-  static const String assemblyApiKey = '';
-  static const String llmApiKey = '';
-
-  // ── Mock Mode ──
-  static const bool useMockData = true;
+  static const String publicAppUrl = String.fromEnvironment(
+    'PUBLIC_APP_URL',
+    defaultValue: '',
+  );
 
   // ── Pagination ──
   static const int defaultPageSize = 10;

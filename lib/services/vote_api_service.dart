@@ -22,15 +22,7 @@ class VoteApiService {
       return MockVotes.getVotesForBill(billId);
     }
 
-    // 실제 API 연동 시:
-    // final response = await _dio.get('/nojepdqqaweusdfbi', queryParameters: {
-    //   'KEY': AppConstants.assemblyApiKey,
-    //   'Type': 'json',
-    //   'BILL_ID': billId,
-    // });
-    // return (response.data['row'] as List)
-    //     .map((e) => VoteModel.fromJson(e))
-    //     .toList();
+    // 운영 연동은 브라우저에 API 키를 넣지 않고 소유한 백엔드를 경유한다.
 
     throw UnimplementedError('실제 API 연동이 설정되지 않았습니다');
   }

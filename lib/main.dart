@@ -6,6 +6,7 @@ import 'app/routes/app_routes.dart';
 import 'app/routes/app_pages.dart';
 import 'app/constants/app_constants.dart';
 import 'services/local_storage_service.dart';
+import 'views/not_found_page.dart';
 import 'widgets/web_responsive_wrapper.dart';
 
 void main() async {
@@ -40,6 +41,10 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       initialRoute: initialRoute,
       getPages: AppPages.pages,
+      unknownRoute: GetPage(
+        name: AppRoutes.notFound,
+        page: () => const NotFoundPage(),
+      ),
       defaultTransition: Transition.cupertino,
       transitionDuration: AppConstants.animPageTransition,
       builder: (context, child) {

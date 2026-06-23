@@ -24,16 +24,8 @@ class BillApiService {
       return MockBills.bills;
     }
 
-    // 실제 API 연동 시:
-    // final response = await _dio.get('/TVBPMBILL11', queryParameters: {
-    //   'KEY': AppConstants.assemblyApiKey,
-    //   'Type': 'json',
-    //   'pIndex': page,
-    //   'pSize': size,
-    // });
-    // return (response.data['row'] as List)
-    //     .map((e) => BillModel.fromJson(e))
-    //     .toList();
+    // 운영 연동은 브라우저에 API 키를 넣지 않고 소유한 백엔드를 경유한다.
+    // 백엔드 계약과 모델 매핑이 준비되면 이 지점에서 호출한다.
 
     throw UnimplementedError('실제 API 연동이 설정되지 않았습니다');
   }

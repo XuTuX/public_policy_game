@@ -33,6 +33,12 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Local environment files may contain secrets. Flutter Web assets and
+# --dart-define values are public, so never commit credentials here.
+.env
+.env.*
+!.env.example
+
 # Symbolication related
 app.*.symbols
 

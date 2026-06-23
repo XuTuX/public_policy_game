@@ -8,4 +8,5 @@ class AppRoutes {
   static const String result = '/result';
   static const String ranking = '/ranking';
   static const String memberDetail = '/member-detail';
+  static const String notFound = '/not-found';
 }

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
 import '../models/bill_model.dart';
 import '../models/user_profile_model.dart';
 import '../repositories/bill_repository.dart';
@@ -37,8 +38,11 @@ class HomeController extends GetxController {
       bills.value = results[0] as List<BillModel>;
       userProfile.value = results[1] as UserProfileModel;
     } catch (e) {
+      if (kDebugMode) {
+        debugPrint('HomeController.loadData failed: $e');
+      }
       hasError.value = true;
-      errorMessage.value = '데이터를 불러오는 데 실패했습니다.\n$e';
+      errorMessage.value = '데이터를 불러오는 데 실패했습니다. 잠시 후 다시 시도해 주세요.';
     } finally {
       isLoading.value = false;
     }

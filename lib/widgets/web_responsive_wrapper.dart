@@ -15,7 +15,9 @@ class WebResponsiveWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isWideScreen = size.width > 600;
+    // 높이가 낮은 가로 창에서는 디바이스 프레임이 화면 밖으로 넘치므로
+    // 모바일 레이아웃을 그대로 사용한다.
+    final isWideScreen = size.width > 600 && size.height >= 640;
 
     if (!isWideScreen) {
       return child;
@@ -69,13 +71,14 @@ class WebResponsiveWrapper extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1200),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // 좌측 브랜드 가이드 (너비가 1000px 이상일 때만 노출)
-                    if (size.width > 1000)
+                    if (size.width > 1000 && size.height >= 760)
                       Expanded(
                         flex: 5,
                         child: Padding(
@@ -94,13 +97,15 @@ class WebResponsiveWrapper extends StatelessWidget {
                                   color: AppColors.primarySurface,
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: AppColors.primary.withValues(alpha: 0.2),
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.2),
                                   ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Text('🏛️', style: TextStyle(fontSize: 14)),
+                                    const Text('🏛️',
+                                        style: TextStyle(fontSize: 14)),
                                     const SizedBox(width: 6),
                                     Text(
                                       '국회 법안 투표 시뮬레이션 게임',
@@ -112,13 +117,20 @@ class WebResponsiveWrapper extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                              ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1, end: 0),
+                              )
+                                  .animate()
+                                  .fadeIn(duration: 400.ms)
+                                  .slideY(begin: -0.1, end: 0),
                               const SizedBox(height: 24),
 
                               // 타이틀 그라데이션 텍스트
                               ShaderMask(
-                                shaderCallback: (bounds) => const LinearGradient(
-                                  colors: [AppColors.primary, AppColors.secondary],
+                                shaderCallback: (bounds) =>
+                                    const LinearGradient(
+                                  colors: [
+                                    AppColors.primary,
+                                    AppColors.secondary
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ).createShader(bounds),
@@ -131,7 +143,9 @@ class WebResponsiveWrapper extends StatelessWidget {
                                     height: 1.2,
                                   ),
                                 ),
-                              ).animate().fadeIn(delay: 150.ms, duration: 400.ms),
+                              )
+                                  .animate()
+                                  .fadeIn(delay: 150.ms, duration: 400.ms),
                               const SizedBox(height: 16),
 
                               Text(
@@ -141,28 +155,33 @@ class WebResponsiveWrapper extends StatelessWidget {
                                   height: 1.6,
                                   fontWeight: FontWeight.w500,
                                 ),
-                              ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
+                              )
+                                  .animate()
+                                  .fadeIn(delay: 300.ms, duration: 400.ms),
                               const SizedBox(height: 40),
 
                               // 주요 피처 카드 목록
                               _buildWebFeatureCard(
                                 emoji: '📋',
                                 title: 'AI 법안 요약 & 현장 생중계',
-                                description: '어려운 법안 조문을 쉽게 파악하고, 기대 효과와 현장의 우려 섞인 목소리를 직접 확인하세요.',
+                                description:
+                                    '어려운 법안 조문을 쉽게 파악하고, 기대 효과와 현장의 우려 섞인 목소리를 직접 확인하세요.',
                                 delayMs: 450,
                               ),
                               const SizedBox(height: 16),
                               _buildWebFeatureCard(
                                 emoji: '🗳️',
                                 title: '나의 소중한 한 표',
-                                description: '찬성, 반대, 기권 등 나만의 올바른 소신을 투표로 표현하고 의정 기록에 남겨두세요.',
+                                description:
+                                    '찬성, 반대, 기권 등 나만의 올바른 소신을 투표로 표현하고 의정 기록에 남겨두세요.',
                                 delayMs: 600,
                               ),
                               const SizedBox(height: 16),
                               _buildWebFeatureCard(
                                 emoji: '🤝',
                                 title: '소울메이트 의원 매칭',
-                                description: '의정 활동 결과를 바탕으로 내 투표 성향을 분석해 나와 생각과 일치율이 가장 높은 국회의원을 찾아줍니다.',
+                                description:
+                                    '의정 활동 결과를 바탕으로 내 투표 성향을 분석해 나와 생각과 일치율이 가장 높은 국회의원을 찾아줍니다.',
                                 delayMs: 750,
                               ),
                             ],
@@ -180,7 +199,8 @@ class WebResponsiveWrapper extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(40),
                             border: Border.all(
-                              color: const Color(0xFF0F172A), // Sleek deep slate bezel
+                              color: const Color(
+                                  0xFF0F172A), // Sleek deep slate bezel
                               width: 12,
                             ),
                             boxShadow: [
@@ -190,7 +210,8 @@ class WebResponsiveWrapper extends StatelessWidget {
                                 offset: const Offset(0, 20),
                               ),
                               BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.03),
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.03),
                                 blurRadius: 60,
                                 offset: const Offset(0, 10),
                               ),
@@ -205,11 +226,15 @@ class WebResponsiveWrapper extends StatelessWidget {
                                 Positioned.fill(
                                   child: Builder(
                                     builder: (innerContext) {
-                                      final originalData = MediaQuery.of(innerContext);
-                                      final overriddenData = originalData.copyWith(
-                                        size: Size(phoneWidth - 24, phoneHeight - 24),
+                                      final originalData =
+                                          MediaQuery.of(innerContext);
+                                      final overriddenData =
+                                          originalData.copyWith(
+                                        size: Size(
+                                            phoneWidth - 24, phoneHeight - 24),
                                         padding: originalData.padding.copyWith(
-                                          top: 36, // 아일랜드 노치를 피하기 위한 가상 세이프 에어리어 탑 패딩
+                                          top:
+                                              36, // 아일랜드 노치를 피하기 위한 가상 세이프 에어리어 탑 패딩
                                           bottom: 12,
                                         ),
                                       );
@@ -333,6 +358,10 @@ class WebResponsiveWrapper extends StatelessWidget {
     )
         .animate()
         .fadeIn(delay: Duration(milliseconds: delayMs), duration: 400.ms)
-        .slideX(begin: 0.05, end: 0, delay: Duration(milliseconds: delayMs), duration: 400.ms);
+        .slideX(
+            begin: 0.05,
+            end: 0,
+            delay: Duration(milliseconds: delayMs),
+            duration: 400.ms);
   }
 }

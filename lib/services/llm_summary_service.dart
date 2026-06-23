@@ -25,40 +25,9 @@ class LlmSummaryService {
       );
     }
 
-    // ── OpenAI API 연동 예시 ──
-    // final response = await _dio.post('/chat/completions', data: {
-    //   'model': 'gpt-4',
-    //   'messages': [
-    //     {
-    //       'role': 'system',
-    //       'content': '당신은 국회 법안을 쉽게 요약하는 전문가입니다. '
-    //           '다음 법안을 읽고 JSON 형식으로 요약해주세요: '
-    //           '{"background": "발의 배경", "pros": "장점", "cons": "문제점"}'
-    //     },
-    //     {
-    //       'role': 'user',
-    //       'content': billContent,
-    //     }
-    //   ],
-    //   'temperature': 0.3,
-    // });
-    //
-    // final content = response.data['choices'][0]['message']['content'];
-    // final jsonData = jsonDecode(content);
-    // return LlmSummary.fromJson(jsonData);
+    // LLM 키와 프롬프트는 클라이언트에 두지 않는다. 운영 연동 시에는
+    // 인증, rate limit, 입력 길이 제한을 적용한 소유 백엔드를 호출한다.
 
     throw UnimplementedError('LLM API 연동이 설정되지 않았습니다');
   }
-
-  // ── Gemini API 연동 예시 (향후) ──
-  // Future<LlmSummary> summarizeBillWithGemini(String billContent) async {
-  //   final dio = Dio(BaseOptions(
-  //     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-  //   ));
-  //   final response = await dio.post(
-  //     '/models/gemini-pro:generateContent?key=${AppConstants.llmApiKey}',
-  //     data: { ... },
-  //   );
-  //   ...
-  // }
 }
