@@ -6,8 +6,9 @@ import '../models/bill_model.dart';
 /// 법안 내용을 카카오톡/웹툰 스타일 대화형 UI로 한 화면에 보여주는 위젯
 class BillChatScene extends StatelessWidget {
   final BillModel bill;
+  final int step;
 
-  const BillChatScene({super.key, required this.bill});
+  const BillChatScene({super.key, required this.bill, required this.step});
 
   @override
   Widget build(BuildContext context) {
@@ -60,42 +61,84 @@ class BillChatScene extends StatelessWidget {
         const SizedBox(height: 16),
 
         // ── 대화 영역 ──
-        // 배경 설명 (수석 보좌관)
-        _ChatBubble(
-          avatar: '👩‍💼',
-          name: '수석 보좌관',
-          nameColor: AppColors.secondary,
-          text: backgroundText,
-          accentColor: AppColors.secondary,
-          isAide: true,
+        // 1. 배경 설명 (항상 보임)
+        _AnimatedBubble(
+          show: step >= 0,
+          child: _ChatBubble(
+            avatar: '👩‍💼',
+            name: '수석 보좌관',
+            nameColor: AppColors.secondary,
+            text: backgroundText,
+            accentColor: AppColors.secondary,
+            isAide: true,
+          ),
         ),
-        const SizedBox(height: 12),
 
-        // 장점 (시민)
-        _ChatBubble(
-          avatar: cast.positiveCharacter,
-          name: cast.positiveSpeaker,
-          nameColor: AppColors.accent,
-          text: prosText,
-          accentColor: AppColors.accent,
-          tag: '기대 효과',
-          tagIcon: Icons.trending_up_rounded,
-          tagText: narrative?.positiveImpact,
+        // 2. 장점 (step >= 1)
+        _AnimatedBubble(
+          show: step >= 1,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: _ChatBubble(
+              avatar: cast.positiveCharacter,
+              name: cast.positiveSpeaker,
+              nameColor: AppColors.accent,
+              text: prosText,
+              accentColor: AppColors.accent,
+              tag: '기대 효과',
+              tagIcon: Icons.trending_up_rounded,
+              tagText: narrative?.positiveImpact,
+            ),
+          ),
         ),
-        const SizedBox(height: 12),
 
-        // 부작용 (다른 시민)
-        _ChatBubble(
-          avatar: cast.concernCharacter,
-          name: cast.concernSpeaker,
-          nameColor: AppColors.warning,
-          text: consText,
-          accentColor: AppColors.warning,
-          tag: '주의할 점',
-          tagIcon: Icons.warning_amber_rounded,
-          tagText: narrative?.concernImpact,
+        // 3. 단점 (step >= 2)
+        _AnimatedBubble(
+          show: step >= 2,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: _ChatBubble(
+              avatar: cast.concernCharacter,
+              name: cast.concernSpeaker,
+              nameColor: AppColors.warning,
+              text: consText,
+              accentColor: AppColors.warning,
+              tag: '주의할 점',
+              tagIcon: Icons.warning_amber_rounded,
+              tagText: narrative?.concernImpact,
+            ),
+          ),
+        ),
+        
+        // 4. 최종 요약 (step >= 3)
+        _AnimatedBubble(
+          show: step >= 3,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 24),
+            child: BillDecisionBrief(bill: bill),
+          ),
         ),
       ],
+    );
+  }
+}
+
+class _AnimatedBubble extends StatelessWidget {
+  final bool show;
+  final Widget child;
+
+  const _AnimatedBubble({required this.show, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 400),
+        opacity: show ? 1.0 : 0.0,
+        child: show ? child : const SizedBox.shrink(),
+      ),
     );
   }
 }

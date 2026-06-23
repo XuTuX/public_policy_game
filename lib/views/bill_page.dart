@@ -45,6 +45,8 @@ class BillPage extends StatelessWidget {
           return const Center(child: Text('법안이 없습니다'));
         }
 
+        final step = controller.sceneStep.value;
+
         return Column(
           children: [
             // ── 진행 바 (심플) ──
@@ -57,16 +59,18 @@ class BillPage extends StatelessWidget {
                 transitionBuilder: (child, animation) {
                   return FadeTransition(opacity: animation, child: child);
                 },
-                child: Padding(
-                  key: ValueKey(bill.id),
-                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
-                  child: BillChatScene(bill: bill),
+                child: SingleChildScrollView(
+                  key: ValueKey('${bill.id}-$step'),
+                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
+                  child: BillChatScene(bill: bill, step: step),
                 ),
               ),
             ),
 
-            // ── 하단 표결 패널 ──
-            _VotePanel(controller: controller, bill: bill),
+            // ── 하단 패널 ──
+            step < 3 
+                ? _NextScenePanel(controller: controller, step: step)
+                : _VotePanel(controller: controller, bill: bill),
           ],
         );
       }),
@@ -271,6 +275,103 @@ class _VoteFeedback extends StatelessWidget {
                 Text(detail, style: AppTextStyles.bodySmall),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NextScenePanel extends StatelessWidget {
+  final BillController controller;
+  final int step;
+
+  const _NextScenePanel({required this.controller, required this.step});
+
+  String get label {
+    switch (step) {
+      case 0:
+        return '장점이 나타난 현장 보기';
+      case 1:
+        return '부작용이 생긴 현장도 보기';
+      default:
+        return '이제 표결하러 가기';
+    }
+  }
+
+  String get helper {
+    switch (step) {
+      case 0:
+        return '법안이 왜 필요한지 확인했습니다';
+      case 1:
+        return '기대되는 변화를 확인했습니다';
+      default:
+        return '우려되는 점까지 모두 확인했습니다';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(helper, style: AppTextStyles.caption),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton(
+              onPressed: controller.nextScene,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(label, style: AppTextStyles.buttonLarge),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward_rounded, size: 20),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (step > 0)
+                TextButton.icon(
+                  onPressed: controller.previousScene,
+                  icon: const Icon(Icons.arrow_back_rounded, size: 17),
+                  label: const Text('이전 대화'),
+                )
+              else
+                const SizedBox(width: 96),
+              if (step < 2)
+                TextButton(
+                  onPressed: controller.skipToDecision,
+                  child: const Text('핵심만 보고 표결'),
+                )
+              else
+                const SizedBox(width: 96),
+            ],
           ),
         ],
       ),
