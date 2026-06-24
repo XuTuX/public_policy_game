@@ -19,7 +19,10 @@ class BillController extends GetxController {
   final isLoading = true.obs;
   final isAnimating = false.obs;
   final lastVoteType = Rxn<VoteType>();
-  final sceneStep = 0.obs;
+  final selectedTab = 0.obs; // 0: 기대 효과, 1: 우려 사항
+  final visitedPros = true.obs;
+  final visitedCons = false.obs;
+  final isVoteMode = false.obs;
   final fastMode = false.obs;
 
   @override
@@ -59,25 +62,34 @@ class BillController extends GetxController {
   /// 남은 법안 수
   int get remainingBills => bills.length - currentIndex.value - 1;
 
-  /// 대화 내용을 배경 → 장점 → 부작용 → 표결 순서로 진행
+  /// 기대 효과/우려 사항 탭 변경 및 표결 전환 로직
   void nextScene() {
-    if (fastMode.value && sceneStep.value == 0) {
-      sceneStep.value = 3;
-      return;
-    }
-    if (sceneStep.value < 3) {
-      sceneStep.value++;
+    if (selectedTab.value == 0) {
+      selectedTab.value = 1;
+      visitedCons.value = true;
+    } else if (selectedTab.value == 1) {
+      isVoteMode.value = true;
     }
   }
 
   void previousScene() {
-    if (sceneStep.value > 0) {
-      sceneStep.value--;
+    if (isVoteMode.value) {
+      isVoteMode.value = false;
+    } else if (selectedTab.value == 1) {
+      selectedTab.value = 0;
     }
   }
 
   void skipToDecision() {
-    sceneStep.value = 3;
+    visitedPros.value = true;
+    visitedCons.value = true;
+    isVoteMode.value = true;
+  }
+
+  void selectTab(int index) {
+    selectedTab.value = index;
+    if (index == 0) visitedPros.value = true;
+    if (index == 1) visitedCons.value = true;
   }
 
   void toggleFastMode() {
@@ -121,7 +133,10 @@ class BillController extends GetxController {
 
     // 다음 법안 또는 결과 화면으로
     if (currentIndex.value < bills.length - 1) {
-      sceneStep.value = 0;
+      selectedTab.value = 0;
+      visitedPros.value = true;
+      visitedCons.value = false;
+      isVoteMode.value = false;
       currentIndex.value++;
     } else {
       // 모든 법안 완료 → 결과 화면

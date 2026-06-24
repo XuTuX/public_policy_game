@@ -45,32 +45,48 @@ class BillPage extends StatelessWidget {
           return const Center(child: Text('법안이 없습니다'));
         }
 
-        final step = controller.sceneStep.value;
+        final isVoteMode = controller.isVoteMode.value;
 
         return Column(
           children: [
             // ── 진행 바 (심플) ──
             _SimpleProgressBar(controller: controller),
 
-            // ── 대화형 콘텐츠 영역 ──
+            // ── 콘텐츠 영역 (탐색 모드 vs 표결 모드) ──
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 transitionBuilder: (child, animation) {
-                  return FadeTransition(opacity: animation, child: child);
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0.0, 0.03),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
                 },
                 child: SingleChildScrollView(
-                  key: ValueKey('${bill.id}-$step'),
+                  key: ValueKey('${bill.id}-$isVoteMode'),
                   padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
-                  child: BillChatScene(bill: bill, step: step),
+                  child: isVoteMode
+                      ? BillDecisionBrief(bill: bill)
+                      : BillChatScene(
+                          bill: bill,
+                          selectedTab: controller.selectedTab.value,
+                          showConsRedDot: !controller.visitedCons.value,
+                          onTabSelected: controller.selectTab,
+                        ),
                 ),
               ),
             ),
 
             // ── 하단 패널 ──
-            step < 3 
-                ? _NextScenePanel(controller: controller, step: step)
-                : _VotePanel(controller: controller, bill: bill),
+            isVoteMode
+                ? _VotePanel(controller: controller, bill: bill)
+                : _NextScenePanel(controller: controller),
           ],
         );
       }),
@@ -142,7 +158,7 @@ class _VotePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
@@ -211,6 +227,16 @@ class _VotePanel extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: controller.previousScene,
+              icon: const Icon(Icons.arrow_back_rounded, size: 16),
+              label: const Text('의견 다시 보기'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.textSecondary,
+                visualDensity: VisualDensity.compact,
               ),
             ),
           ],
@@ -284,36 +310,13 @@ class _VoteFeedback extends StatelessWidget {
 
 class _NextScenePanel extends StatelessWidget {
   final BillController controller;
-  final int step;
 
-  const _NextScenePanel({required this.controller, required this.step});
-
-  String get label {
-    switch (step) {
-      case 0:
-        return '장점이 나타난 현장 보기';
-      case 1:
-        return '부작용이 생긴 현장도 보기';
-      default:
-        return '이제 표결하러 가기';
-    }
-  }
-
-  String get helper {
-    switch (step) {
-      case 0:
-        return '법안이 왜 필요한지 확인했습니다';
-      case 1:
-        return '기대되는 변화를 확인했습니다';
-      default:
-        return '우려되는 점까지 모두 확인했습니다';
-    }
-  }
+  const _NextScenePanel({required this.controller});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
@@ -325,56 +328,63 @@ class _NextScenePanel extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(helper, style: AppTextStyles.caption),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            height: 54,
-            child: ElevatedButton(
-              onPressed: controller.nextScene,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+      child: Obx(() {
+        final isPros = controller.selectedTab.value == 0;
+        final helper = isPros
+            ? '법안의 기대 효과(찬성)를 확인했습니다'
+            : '법안의 우려 사항(반대)을 확인했습니다';
+        final label = isPros
+            ? '우려되는 점(반대) 확인하기'
+            : '표결하러 가기';
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(helper, style: AppTextStyles.caption),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: ElevatedButton(
+                onPressed: controller.nextScene,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(label, style: AppTextStyles.buttonLarge),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward_rounded, size: 20),
+                  ],
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(label, style: AppTextStyles.buttonLarge),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward_rounded, size: 20),
-                ],
-              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (step > 0)
-                TextButton.icon(
-                  onPressed: controller.previousScene,
-                  icon: const Icon(Icons.arrow_back_rounded, size: 17),
-                  label: const Text('이전 대화'),
-                )
-              else
-                const SizedBox(width: 96),
-              if (step < 2)
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (!isPros)
+                  TextButton.icon(
+                    onPressed: controller.previousScene,
+                    icon: const Icon(Icons.arrow_back_rounded, size: 17),
+                    label: const Text('기대 효과 보기'),
+                  )
+                else
+                  const SizedBox(width: 96),
                 TextButton(
                   onPressed: controller.skipToDecision,
                   child: const Text('핵심만 보고 표결'),
-                )
-              else
-                const SizedBox(width: 96),
-            ],
-          ),
-        ],
-      ),
+                ),
+              ],
+            ),
+          ],
+        );
+      }),
     );
   }
 }

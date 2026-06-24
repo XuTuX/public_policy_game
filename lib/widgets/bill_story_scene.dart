@@ -7,9 +7,17 @@ import 'package:url_launcher/url_launcher.dart';
 /// 법안 내용을 카카오톡/웹툰 스타일 대화형 UI로 한 화면에 보여주는 위젯
 class BillChatScene extends StatelessWidget {
   final BillModel bill;
-  final int step;
+  final int selectedTab;
+  final bool showConsRedDot;
+  final ValueChanged<int> onTabSelected;
 
-  const BillChatScene({super.key, required this.bill, required this.step});
+  const BillChatScene({
+    super.key,
+    required this.bill,
+    required this.selectedTab,
+    required this.showConsRedDot,
+    required this.onTabSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -99,61 +107,160 @@ class BillChatScene extends StatelessWidget {
 
         // ── 대화 영역 ──
         // 1. 배경 설명 (항상 보임)
-        _AnimatedBubble(
-          show: step >= 0,
-          child: _ChatBubble(
-            avatar: '👩‍💼',
-            name: '수석 보좌관',
-            nameColor: AppColors.secondary,
-            text: backgroundText,
-            accentColor: AppColors.secondary,
-            isAide: true,
-          ),
+        _ChatBubble(
+          avatar: '👩‍💼',
+          name: '수석 보좌관',
+          nameColor: AppColors.secondary,
+          text: backgroundText,
+          accentColor: AppColors.secondary,
+          isAide: true,
         ),
 
-        // 2. 장점 (step >= 1)
-        _AnimatedBubble(
-          show: step >= 1,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: _ChatBubble(
-              avatar: cast.positiveCharacter,
-              name: cast.positiveSpeaker,
-              nameColor: AppColors.accent,
-              text: prosText,
-              accentColor: AppColors.accent,
-              tag: '기대 효과',
-              tagIcon: Icons.trending_up_rounded,
-              tagText: narrative?.positiveImpact,
-            ),
+        // ── 커스텀 찬/반 탭 바 ──
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceVariant,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              // 기대 효과 탭
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => onTabSelected(0),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: selectedTab == 0
+                          ? AppColors.accent.withValues(alpha: 0.1)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: selectedTab == 0
+                            ? AppColors.accent.withValues(alpha: 0.3)
+                            : Colors.transparent,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.trending_up_rounded,
+                            size: 16, color: AppColors.accentDark),
+                        const SizedBox(width: 6),
+                        Text(
+                          '기대 효과',
+                          style: AppTextStyles.labelMedium.copyWith(
+                            color: selectedTab == 0
+                                ? AppColors.accentDark
+                                : AppColors.textSecondary,
+                            fontWeight: selectedTab == 0
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              // 우려 사항 탭
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => onTabSelected(1),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: selectedTab == 1
+                          ? AppColors.warning.withValues(alpha: 0.1)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: selectedTab == 1
+                            ? AppColors.warning.withValues(alpha: 0.3)
+                            : Colors.transparent,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.warning_amber_rounded,
+                            size: 16, color: AppColors.warning),
+                        const SizedBox(width: 6),
+                        Text(
+                          '우려 사항',
+                          style: AppTextStyles.labelMedium.copyWith(
+                            color: selectedTab == 1
+                                ? AppColors.warning
+                                : AppColors.textSecondary,
+                            fontWeight: selectedTab == 1
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                          ),
+                        ),
+                        if (showConsRedDot) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: AppColors.error,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
+        const SizedBox(height: 16),
 
-        // 3. 단점 (step >= 2)
-        _AnimatedBubble(
-          show: step >= 2,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: _ChatBubble(
-              avatar: cast.concernCharacter,
-              name: cast.concernSpeaker,
-              nameColor: AppColors.warning,
-              text: consText,
-              accentColor: AppColors.warning,
-              tag: '주의할 점',
-              tagIcon: Icons.warning_amber_rounded,
-              tagText: narrative?.concernImpact,
-            ),
-          ),
-        ),
-
-        // 4. 최종 요약 (step >= 3)
-        _AnimatedBubble(
-          show: step >= 3,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 24),
-            child: BillDecisionBrief(bill: bill),
-          ),
+        // ── 탭 콘텐츠 영역 ──
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          transitionBuilder: (child, animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.0, 0.05),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            );
+          },
+          child: selectedTab == 0
+              ? _ChatBubble(
+                  key: const ValueKey('pros-bubble'),
+                  avatar: cast.positiveCharacter,
+                  name: cast.positiveSpeaker,
+                  nameColor: AppColors.accentDark,
+                  text: prosText,
+                  accentColor: AppColors.accent,
+                  tag: '기대 효과',
+                  tagIcon: Icons.trending_up_rounded,
+                  tagText: narrative?.positiveImpact,
+                )
+              : _ChatBubble(
+                  key: const ValueKey('cons-bubble'),
+                  avatar: cast.concernCharacter,
+                  name: cast.concernSpeaker,
+                  nameColor: AppColors.warning,
+                  text: consText,
+                  accentColor: AppColors.warning,
+                  tag: '주의할 점',
+                  tagIcon: Icons.warning_amber_rounded,
+                  tagText: narrative?.concernImpact,
+                ),
         ),
       ],
     );
@@ -192,26 +299,6 @@ class _SourceChip extends StatelessWidget {
   }
 }
 
-class _AnimatedBubble extends StatelessWidget {
-  final bool show;
-  final Widget child;
-
-  const _AnimatedBubble({required this.show, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 400),
-        opacity: show ? 1.0 : 0.0,
-        child: show ? child : const SizedBox.shrink(),
-      ),
-    );
-  }
-}
-
 /// 카카오톡 스타일 대화 말풍선
 class _ChatBubble extends StatelessWidget {
   final String avatar;
@@ -225,6 +312,7 @@ class _ChatBubble extends StatelessWidget {
   final String? tagText;
 
   const _ChatBubble({
+    super.key,
     required this.avatar,
     required this.name,
     required this.nameColor,
@@ -364,112 +452,76 @@ class BillDecisionBrief extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 카테고리 + 법안명
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.primarySurface,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                '${bill.categoryEmoji} ${bill.category}',
+        // 안내 뱃지
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.description_outlined, size: 14, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                '표결 대상 법안 요약',
                 style: AppTextStyles.caption.copyWith(
                   color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
+        // 컴팩트한 법안명
         Text(
           bill.billName,
           style: AppTextStyles.headlineSmall.copyWith(
-            height: 1.3,
+            fontSize: 18,
+            height: 1.35,
             letterSpacing: -0.3,
           ),
         ),
         const SizedBox(height: 16),
-
-        // 수석 보좌관 요약
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: AppColors.primarySurface,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+        
+        // 보좌관의 최종 브리핑 한줄 요약
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceVariant,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Text('👩‍💼', style: TextStyle(fontSize: 20)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '의원님, 마지막으로 기대 효과와 주의할 점을 대조해 보시고 표결에 참여해주세요.',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
                 ),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: Image.asset(
-                'assets/characters/senior_aide.png',
-                fit: BoxFit.cover,
-                alignment: const Alignment(0, -0.7),
-                errorBuilder: (context, error, stackTrace) => const Center(
-                  child: Text('👩‍💼', style: TextStyle(fontSize: 18)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '수석 보좌관',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 11),
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySurface.withValues(alpha: 0.6),
-                      borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(14),
-                        bottomLeft: Radius.circular(14),
-                        bottomRight: Radius.circular(14),
-                        topLeft: Radius.circular(3),
-                      ),
-                      border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    child: Text(
-                      '핵심만 다시 짚어드릴게요.',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 20),
 
-        // 기대 효과 / 주의할 점
+        // 기대 효과 / 주의할 점 카드 대조 배치
         _CompactImpactRow(
           icon: Icons.trending_up_rounded,
-          label: '기대 효과',
+          label: '기대 효과 (찬성 의견)',
           value: narrative?.positiveImpact ?? '정책의 기대 효과',
           color: AppColors.accent,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         _CompactImpactRow(
           icon: Icons.warning_amber_rounded,
-          label: '주의할 점',
+          label: '주의할 점 (반대 의견)',
           value: narrative?.concernImpact ?? '시행 과정의 부담',
           color: AppColors.warning,
         ),
