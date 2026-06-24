@@ -52,7 +52,7 @@ class VoteRepositoryImpl implements VoteRepository {
         final votes = allVotes[answer.billId] ?? [];
         final memberVote = votes.where((v) {
           if (v.memberId.isNotEmpty) return v.memberId == member.id;
-          return AppConstants.useMockData && v.memberName == member.name;
+          return false;
         }).firstOrNull;
 
         if (memberVote != null && memberVote.status.comparableChoice != null) {

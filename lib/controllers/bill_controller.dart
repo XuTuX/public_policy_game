@@ -6,6 +6,7 @@ import '../models/user_answer_model.dart';
 import '../repositories/bill_repository.dart';
 import '../app/routes/app_routes.dart';
 import '../services/game_session_service.dart';
+import '../app/constants/app_constants.dart';
 
 /// 법안 표결 화면 컨트롤러
 class BillController extends GetxController {
@@ -31,7 +32,11 @@ class BillController extends GetxController {
   Future<void> loadBills() async {
     try {
       isLoading.value = true;
-      bills.value = await _billRepository.getBills();
+      final allBills = await _billRepository.getBills();
+      
+      // 한번 플레이 시 최대 개수 제한 (매번 다양한 법안을 접할 수 있게 셔플)
+      final shuffledBills = allBills.toList()..shuffle();
+      bills.value = shuffledBills.take(AppConstants.maxBillsPerSession).toList();
     } catch (e) {
       final message = e is StateError ? e.message : '법안을 불러오는 데 실패했습니다';
       Get.snackbar('오류', message);

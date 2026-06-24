@@ -20,7 +20,7 @@ void main() async {
     statusBarBrightness: Brightness.light,
   ));
 
-  if (!AppConstants.useMockData && AppConstants.hasSupabaseConfiguration) {
+  if (AppConstants.hasSupabaseConfiguration) {
     await Supabase.initialize(
       url: AppConstants.supabaseUrl,
       publishableKey: AppConstants.supabasePublishableKey,

@@ -1,6 +1,5 @@
 import '../app/constants/app_constants.dart';
 import '../models/bill_model.dart';
-import '../data/mock/mock_bills.dart';
 import 'http_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'game_session_service.dart';
@@ -23,12 +22,7 @@ class BillApiService {
     final session = GameSessionService();
     if (session.bills.isNotEmpty) return session.bills;
 
-    if (AppConstants.useMockData) {
-      // Mock: 약간의 딜레이를 주어 실제 API 호출 느낌
-      await Future.delayed(const Duration(milliseconds: 800));
-      session.update(gameSetId: 'mock', bills: MockBills.bills);
-      return session.bills;
-    }
+
 
     if (!AppConstants.hasSupabaseConfiguration) {
       throw StateError(
@@ -60,10 +54,7 @@ class BillApiService {
 
   /// 특정 법안 상세 조회
   Future<BillModel?> fetchBillById(String billId) async {
-    if (AppConstants.useMockData) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      return MockBills.bills.where((b) => b.id == billId).firstOrNull;
-    }
+
 
     final bills = await fetchBills();
     return bills.where((bill) => bill.id == billId).firstOrNull;

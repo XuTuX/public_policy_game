@@ -46,6 +46,7 @@ class AppConstants {
 
   // ── Pagination ──
   static const int defaultPageSize = 10;
+  static const int maxBillsPerSession = 7;
 
   static const String keyOnboardingCompleted = 'onboarding_completed';
   static const String keyTotalVotes = 'total_votes';

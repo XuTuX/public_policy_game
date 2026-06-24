@@ -1,8 +1,6 @@
 import '../app/constants/app_constants.dart';
 import '../models/vote_model.dart';
 import '../models/assembly_member_model.dart';
-import '../data/mock/mock_votes.dart';
-import '../data/mock/mock_members.dart';
 import 'http_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'game_session_service.dart';
@@ -39,10 +37,7 @@ class VoteApiService {
 
   /// 특정 법안의 표결 데이터 조회
   Future<List<VoteModel>> fetchVotesByBillId(String billId) async {
-    if (AppConstants.useMockData) {
-      await Future.delayed(const Duration(milliseconds: 300));
-      return MockVotes.getVotesForBill(billId);
-    }
+
 
     final payload = await _fetchGameVotes();
     final rows = payload['votes'];
@@ -56,10 +51,7 @@ class VoteApiService {
 
   /// 전체 국회의원 목록 조회
   Future<List<AssemblyMemberModel>> fetchMembers() async {
-    if (AppConstants.useMockData) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      return MockMembers.members;
-    }
+
 
     final payload = await _fetchGameVotes();
     final rows = payload['members'];
@@ -74,14 +66,7 @@ class VoteApiService {
   /// 특정 법안에 대한 모든 의원의 표결 데이터 일괄 조회
   Future<Map<String, List<VoteModel>>> fetchAllVotes(
       List<String> billIds) async {
-    if (AppConstants.useMockData) {
-      await Future.delayed(const Duration(milliseconds: 600));
-      final result = <String, List<VoteModel>>{};
-      for (final billId in billIds) {
-        result[billId] = MockVotes.getVotesForBill(billId);
-      }
-      return result;
-    }
+
 
     final payload = await _fetchGameVotes();
     final rows = payload['votes'];

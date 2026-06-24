@@ -31,7 +31,7 @@ class HomeController extends GetxController {
       isLoading.value = true;
       hasError.value = false;
 
-      if (!AppConstants.useMockData && !AppConstants.hasSupabaseConfiguration) {
+      if (!AppConstants.hasSupabaseConfiguration) {
         throw StateError(
           'Supabase 연동 설정이 없습니다. '
           'SUPABASE_URL과 SUPABASE_PUBLISHABLE_KEY를 설정해 주세요.',
