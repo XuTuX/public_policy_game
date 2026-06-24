@@ -7,6 +7,10 @@ class BillModel {
   final String status;
   final String proposer;
   final DateTime proposedDate;
+  final DateTime? voteDate;
+  final String officialSourceUrl;
+  final DateTime? dataAsOf;
+  final String? aiModel;
   final LlmSummary? summary;
   final BillNarrative? narrative;
   final int estimatedMinutes;
@@ -19,6 +23,10 @@ class BillModel {
     required this.status,
     required this.proposer,
     required this.proposedDate,
+    this.voteDate,
+    this.officialSourceUrl = '',
+    this.dataAsOf,
+    this.aiModel,
     this.summary,
     this.narrative,
     this.estimatedMinutes = 2,
@@ -36,6 +44,14 @@ class BillModel {
       proposedDate: json['proposedDate'] != null
           ? DateTime.parse(json['proposedDate'] as String)
           : DateTime.now(),
+      voteDate: json['voteDate'] != null
+          ? DateTime.tryParse(json['voteDate'] as String)
+          : null,
+      officialSourceUrl: json['officialSourceUrl'] as String? ?? '',
+      dataAsOf: json['dataAsOf'] != null
+          ? DateTime.tryParse(json['dataAsOf'] as String)
+          : null,
+      aiModel: json['aiModel'] as String?,
       summary: json['summary'] != null
           ? LlmSummary.fromJson(json['summary'] as Map<String, dynamic>)
           : null,
@@ -56,6 +72,10 @@ class BillModel {
       'status': status,
       'proposer': proposer,
       'proposedDate': proposedDate.toIso8601String(),
+      'voteDate': voteDate?.toIso8601String(),
+      'officialSourceUrl': officialSourceUrl,
+      'dataAsOf': dataAsOf?.toIso8601String(),
+      'aiModel': aiModel,
       'summary': summary?.toJson(),
       'narrative': narrative?.toJson(),
       'estimatedMinutes': estimatedMinutes,

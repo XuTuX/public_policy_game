@@ -30,6 +30,19 @@ class AppConstants {
     defaultValue: '',
   );
 
+  static const String supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: '',
+  );
+
+  static const String supabasePublishableKey = String.fromEnvironment(
+    'SUPABASE_PUBLISHABLE_KEY',
+    defaultValue: '',
+  );
+
+  static bool get hasSupabaseConfiguration =>
+      supabaseUrl.isNotEmpty && supabasePublishableKey.isNotEmpty;
+
   // ── Pagination ──
   static const int defaultPageSize = 10;
 

@@ -5,6 +5,7 @@ import '../models/user_profile_model.dart';
 import '../repositories/bill_repository.dart';
 import '../repositories/user_repository.dart';
 import '../app/routes/app_routes.dart';
+import '../app/constants/app_constants.dart';
 
 /// 홈 화면 컨트롤러
 class HomeController extends GetxController {
@@ -30,6 +31,13 @@ class HomeController extends GetxController {
       isLoading.value = true;
       hasError.value = false;
 
+      if (!AppConstants.useMockData && !AppConstants.hasSupabaseConfiguration) {
+        throw StateError(
+          'Supabase 연동 설정이 없습니다. '
+          'SUPABASE_URL과 SUPABASE_PUBLISHABLE_KEY를 설정해 주세요.',
+        );
+      }
+
       final results = await Future.wait([
         _billRepository.getBills(),
         _userRepository.getUserProfile(),
@@ -42,7 +50,8 @@ class HomeController extends GetxController {
         debugPrint('HomeController.loadData failed: $e');
       }
       hasError.value = true;
-      errorMessage.value = '데이터를 불러오는 데 실패했습니다. 잠시 후 다시 시도해 주세요.';
+      errorMessage.value =
+          e is StateError ? e.message : '데이터를 불러오는 데 실패했습니다. 잠시 후 다시 시도해 주세요.';
     } finally {
       isLoading.value = false;
     }

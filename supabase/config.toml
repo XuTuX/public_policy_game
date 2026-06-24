@@ -1,0 +1,11 @@
+project_id = "public-policy-game"
+
+[functions.sync-assembly]
+verify_jwt = false
+
+[functions.summary-worker]
+verify_jwt = false
+
+[functions.publish-game]
+verify_jwt = false
+

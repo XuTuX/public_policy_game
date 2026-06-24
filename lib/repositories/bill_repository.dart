@@ -1,5 +1,6 @@
 import '../models/bill_model.dart';
 import '../services/bill_api_service.dart';
+import '../services/game_session_service.dart';
 
 /// 법안 데이터 Repository 인터페이스
 abstract class BillRepository {
@@ -39,5 +40,6 @@ class BillRepositoryImpl implements BillRepository {
   /// 캐시 초기화 (Pull to Refresh 시 사용)
   void clearCache() {
     _cachedBills = null;
+    GameSessionService().clear();
   }
 }

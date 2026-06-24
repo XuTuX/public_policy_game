@@ -5,6 +5,7 @@ import '../models/vote_model.dart';
 import '../models/user_answer_model.dart';
 import '../repositories/bill_repository.dart';
 import '../app/routes/app_routes.dart';
+import '../services/game_session_service.dart';
 
 /// 법안 표결 화면 컨트롤러
 class BillController extends GetxController {
@@ -32,7 +33,8 @@ class BillController extends GetxController {
       isLoading.value = true;
       bills.value = await _billRepository.getBills();
     } catch (e) {
-      Get.snackbar('오류', '법안을 불러오는 데 실패했습니다');
+      final message = e is StateError ? e.message : '법안을 불러오는 데 실패했습니다';
+      Get.snackbar('오류', message);
     } finally {
       isLoading.value = false;
     }
@@ -103,6 +105,7 @@ class BillController extends GetxController {
         billName: currentBill!.billName,
         answer: voteType,
         answeredAt: DateTime.now(),
+        gameSetId: GameSessionService().gameSetId,
       ),
     );
 

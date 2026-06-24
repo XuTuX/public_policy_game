@@ -12,6 +12,7 @@ class RankingController extends GetxController {
   final rankedMembers = <AssemblyMemberModel>[].obs;
   final isLoading = true.obs;
   final hasError = false.obs;
+  final errorMessage = ''.obs;
 
   // ── 필터링 & 검색 상태 ──
   final searchQuery = ''.obs;
@@ -31,11 +32,13 @@ class RankingController extends GetxController {
     try {
       isLoading.value = true;
       hasError.value = false;
+      errorMessage.value = '';
 
       final members = await _voteRepository.getMatchedMembers(answers);
       rankedMembers.value = members;
     } catch (e) {
       hasError.value = true;
+      errorMessage.value = e is StateError ? e.message : '매칭 결과를 불러올 수 없습니다';
     } finally {
       isLoading.value = false;
     }

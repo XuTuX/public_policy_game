@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../app/theme/app_colors.dart';
 import '../app/theme/app_text_styles.dart';
 import '../models/bill_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// 법안 내용을 카카오톡/웹툰 스타일 대화형 UI로 한 화면에 보여주는 위젯
 class BillChatScene extends StatelessWidget {
@@ -19,12 +20,10 @@ class BillChatScene extends StatelessWidget {
     final backgroundText = narrative?.backgroundDialogue ??
         summary?.background ??
         '법안의 배경 정보를 준비하고 있습니다.';
-    final prosText = narrative?.positiveDialogue ??
-        summary?.pros ??
-        '기대 효과 정보를 준비하고 있습니다.';
-    final consText = narrative?.concernDialogue ??
-        summary?.cons ??
-        '우려 사항 정보를 준비하고 있습니다.';
+    final prosText =
+        narrative?.positiveDialogue ?? summary?.pros ?? '기대 효과 정보를 준비하고 있습니다.';
+    final consText =
+        narrative?.concernDialogue ?? summary?.cons ?? '우려 사항 정보를 준비하고 있습니다.';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,6 +57,46 @@ class BillChatScene extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
+        if (bill.voteDate != null || bill.dataAsOf != null) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (bill.voteDate != null)
+                _SourceChip(
+                  icon: Icons.how_to_vote_outlined,
+                  label: '본회의 표결 ${_dateLabel(bill.voteDate!)}',
+                ),
+              _SourceChip(
+                icon: Icons.auto_awesome_outlined,
+                label: '${bill.aiModel ?? 'DeepSeek'} AI 요약',
+              ),
+              if (bill.officialSourceUrl.isNotEmpty)
+                TextButton.icon(
+                  onPressed: () => launchUrl(
+                    Uri.parse(bill.officialSourceUrl),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 15),
+                  label: const Text('국회 공식 원문'),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                ),
+            ],
+          ),
+          Text(
+            '※ AI 요약은 오류가 있을 수 있으므로 중요한 판단 전 공식 원문을 확인하세요.'
+            '${bill.dataAsOf == null ? '' : '  데이터 기준 ${_dateTimeLabel(bill.dataAsOf!)}'}',
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textTertiary,
+              fontSize: 10,
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
 
         // ── 대화 영역 ──
@@ -109,7 +148,7 @@ class BillChatScene extends StatelessWidget {
             ),
           ),
         ),
-        
+
         // 4. 최종 요약 (step >= 3)
         _AnimatedBubble(
           show: step >= 3,
@@ -119,6 +158,38 @@ class BillChatScene extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  static String _dateLabel(DateTime value) =>
+      '${value.year}.${value.month.toString().padLeft(2, '0')}.${value.day.toString().padLeft(2, '0')}';
+
+  static String _dateTimeLabel(DateTime value) =>
+      '${_dateLabel(value.toLocal())} ${value.toLocal().hour.toString().padLeft(2, '0')}:${value.toLocal().minute.toString().padLeft(2, '0')}';
+}
+
+class _SourceChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _SourceChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.textSecondary),
+          const SizedBox(width: 4),
+          Text(label, style: AppTextStyles.caption.copyWith(fontSize: 10)),
+        ],
+      ),
     );
   }
 }

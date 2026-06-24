@@ -277,28 +277,26 @@ class MemberDetailPage extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           // 나의 선택
-          _voteChip('나', comparison.userVote),
+          _userVoteChip('나', comparison.userVote),
           const SizedBox(width: 6),
           // 의원 선택
-          _voteChip('의원', comparison.memberVote),
+          _memberVoteChip('의원', comparison.memberVote),
           const SizedBox(width: 8),
           // 같음/다름
           Container(
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: comparison.isMatch
-                  ? AppColors.voteYesBg
-                  : AppColors.voteNoBg,
+              color:
+                  comparison.isMatch ? AppColors.voteYesBg : AppColors.voteNoBg,
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
                 comparison.isMatch ? '✓' : '✗',
                 style: TextStyle(
-                  color: comparison.isMatch
-                      ? AppColors.voteYes
-                      : AppColors.voteNo,
+                  color:
+                      comparison.isMatch ? AppColors.voteYes : AppColors.voteNo,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
                 ),
@@ -310,10 +308,26 @@ class MemberDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _voteChip(String label, VoteType vote) {
-    final isYes = vote == VoteType.yes;
-    final color = isYes ? AppColors.voteYes : AppColors.voteNo;
+  Widget _userVoteChip(String label, VoteType vote) {
+    final color = switch (vote) {
+      VoteType.yes => AppColors.voteYes,
+      VoteType.no => AppColors.voteNo,
+      VoteType.abstain => AppColors.textSecondary,
+    };
+    return _voteChip(label, vote.label, color);
+  }
 
+  Widget _memberVoteChip(String label, MemberVoteStatus vote) {
+    final color = switch (vote) {
+      MemberVoteStatus.yes => AppColors.voteYes,
+      MemberVoteStatus.no => AppColors.voteNo,
+      MemberVoteStatus.abstain => AppColors.textSecondary,
+      MemberVoteStatus.notVoted => AppColors.textTertiary,
+    };
+    return _voteChip(label, vote.label, color);
+  }
+
+  Widget _voteChip(String label, String voteLabel, Color color) {
     return Column(
       children: [
         Text(
@@ -328,7 +342,7 @@ class MemberDetailPage extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
-            vote.label,
+            voteLabel,
             style: TextStyle(
               color: color,
               fontSize: 11,

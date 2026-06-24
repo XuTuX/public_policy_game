@@ -2,6 +2,8 @@ import '../app/constants/app_constants.dart';
 import '../models/bill_model.dart';
 import '../data/mock/mock_bills.dart';
 import 'http_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'game_session_service.dart';
 
 /// 의안정보 API 서비스
 /// 현재: Mock 데이터 반환
@@ -18,16 +20,42 @@ class BillApiService {
     int page = 1,
     int size = AppConstants.defaultPageSize,
   }) async {
+    final session = GameSessionService();
+    if (session.bills.isNotEmpty) return session.bills;
+
     if (AppConstants.useMockData) {
       // Mock: 약간의 딜레이를 주어 실제 API 호출 느낌
       await Future.delayed(const Duration(milliseconds: 800));
-      return MockBills.bills;
+      session.update(gameSetId: 'mock', bills: MockBills.bills);
+      return session.bills;
     }
 
-    // 운영 연동은 브라우저에 API 키를 넣지 않고 소유한 백엔드를 경유한다.
-    // 백엔드 계약과 모델 매핑이 준비되면 이 지점에서 호출한다.
+    if (!AppConstants.hasSupabaseConfiguration) {
+      throw StateError(
+        'Supabase 설정이 없습니다. '
+        'SUPABASE_URL과 SUPABASE_PUBLISHABLE_KEY를 설정해 주세요.',
+      );
+    }
 
-    throw UnimplementedError('실제 API 연동이 설정되지 않았습니다');
+    final response = await Supabase.instance.client.rpc('get_active_game');
+    if (response is! Map || response['gameSetId'] == null) {
+      throw StateError('아직 공개된 실데이터 게임 세트가 없습니다.');
+    }
+    final dataAsOf = response['dataAsOf'] != null
+        ? DateTime.tryParse(response['dataAsOf'].toString())
+        : null;
+    final rows = response['bills'];
+    if (rows is! List) return const [];
+    final bills = rows
+        .whereType<Map>()
+        .map((row) => BillModel.fromJson(Map<String, dynamic>.from(row)))
+        .toList();
+    session.update(
+      gameSetId: response['gameSetId'].toString(),
+      dataAsOf: dataAsOf,
+      bills: bills,
+    );
+    return session.bills;
   }
 
   /// 특정 법안 상세 조회
@@ -37,6 +65,7 @@ class BillApiService {
       return MockBills.bills.where((b) => b.id == billId).firstOrNull;
     }
 
-    throw UnimplementedError('실제 API 연동이 설정되지 않았습니다');
+    final bills = await fetchBills();
+    return bills.where((bill) => bill.id == billId).firstOrNull;
   }
 }

@@ -2,6 +2,7 @@ import '../models/vote_model.dart';
 import '../models/assembly_member_model.dart';
 import '../models/user_answer_model.dart';
 import '../services/vote_api_service.dart';
+import '../app/constants/app_constants.dart';
 
 /// 표결 데이터 Repository 인터페이스
 abstract class VoteRepository {
@@ -49,26 +50,26 @@ class VoteRepositoryImpl implements VoteRepository {
 
       for (final answer in answers) {
         final votes = allVotes[answer.billId] ?? [];
-        final memberVote = votes
-            .where((v) => v.memberName == member.name)
-            .firstOrNull;
+        final memberVote = votes.where((v) {
+          if (v.memberId.isNotEmpty) return v.memberId == member.id;
+          return AppConstants.useMockData && v.memberName == member.name;
+        }).firstOrNull;
 
-        if (memberVote != null) {
+        if (memberVote != null && memberVote.status.comparableChoice != null) {
           totalCount++;
-          final isMatch = answer.answer == memberVote.voteType;
+          final isMatch = answer.answer == memberVote.status.comparableChoice;
           if (isMatch) matchCount++;
 
           comparisons.add(VoteComparison(
             billId: answer.billId,
             billName: answer.billName,
             userVote: answer.answer,
-            memberVote: memberVote.voteType,
+            memberVote: memberVote.status,
           ));
         }
       }
 
-      final matchRate =
-          totalCount > 0 ? (matchCount / totalCount) * 100 : 0.0;
+      final matchRate = totalCount > 0 ? (matchCount / totalCount) * 100 : 0.0;
 
       matchedMembers.add(member.copyWith(
         matchRate: matchRate,
@@ -77,7 +78,13 @@ class VoteRepositoryImpl implements VoteRepository {
     }
 
     // 일치율 내림차순 정렬
-    matchedMembers.sort((a, b) => b.matchRate.compareTo(a.matchRate));
+    matchedMembers.sort((a, b) {
+      final byRate = b.matchRate.compareTo(a.matchRate);
+      if (byRate != 0) return byRate;
+      final byCompared = b.comparisons.length.compareTo(a.comparisons.length);
+      if (byCompared != 0) return byCompared;
+      return a.name.compareTo(b.name);
+    });
     return matchedMembers;
   }
 

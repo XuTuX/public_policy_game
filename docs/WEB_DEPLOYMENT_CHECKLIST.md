@@ -4,7 +4,7 @@
 
 ## 결론
 
-현재 버전은 **Mock 데이터를 사용하는 공개 데모**로 배포할 수 있습니다. **실제 국회 데이터와 LLM을 사용하는 운영 서비스**로 배포하려면 백엔드 구축이 선행되어야 합니다. `USE_MOCK_DATA=false` 경로는 아직 `UnimplementedError`를 발생시키므로 운영에 사용할 수 없습니다.
+현재 버전은 **Mock 데이터 데모**와 **Supabase 기반 실데이터 모드**를 모두 지원합니다. 실데이터 모드를 운영하려면 `supabase/`의 마이그레이션·Edge Function을 배포하고 국회/DeepSeek 비밀값과 Cron Vault 값을 설정해야 합니다. 실제 키를 사용한 staging 전체 흐름 검증은 배포 전 필수입니다.
 
 ## 이번 점검에서 반영한 항목
 
@@ -26,12 +26,12 @@
 
 ### 1. 백엔드/API 게이트웨이 구축
 
-- [ ] 국회 API 키와 LLM API 키를 서버의 secret 저장소에 보관
-- [ ] 브라우저 → 소유 백엔드 → 국회/LLM API 구조로 변경
+- [x] 국회 API 키와 LLM API 키를 Supabase Edge Function secret에서만 읽는 구조 구현
+- [x] 브라우저 → Supabase RPC → 정제된 DB 데이터 구조로 변경
 - [ ] 허용 origin, 요청 크기 제한, 타임아웃, rate limit, 재시도 정책 적용
-- [ ] 법안/표결 데이터 캐시와 장애 시 마지막 정상 데이터 제공 전략 마련
-- [ ] LLM 응답을 서버에서 JSON schema로 검증하고 유해/왜곡 출력 방어
-- [ ] `BillApiService`, `VoteApiService`, `LlmSummaryService`의 비-Mock 경로 구현
+- [x] 완성된 10건을 게임 세트로 스냅샷하고 부분 실패 시 직전 세트 유지
+- [x] DeepSeek JSON 응답을 Edge Function과 DB 제약으로 검증하고 출처 해시 보관
+- [x] `BillApiService`, `VoteApiService`의 비-Mock Supabase RPC 경로 구현
 - [ ] API 계약 테스트와 실패/빈 데이터/부분 장애 테스트 추가
 
 공공 API 키도 브라우저에 두면 제3자가 복사해 할당량을 소진할 수 있습니다. OpenAI 등 과금 가능한 키는 절대 웹 앱에 넣으면 안 됩니다.

@@ -31,7 +31,11 @@ class RankingPage extends StatelessWidget {
           return const LoadingWidget(message: '나와 비슷한 의원을 찾고 있습니다...');
         }
         if (controller.hasError.value) {
-          return const AppErrorWidget(message: '매칭 결과를 불러올 수 없습니다');
+          return AppErrorWidget(
+            message: controller.errorMessage.value.isNotEmpty
+                ? controller.errorMessage.value
+                : '매칭 결과를 불러올 수 없습니다',
+          );
         }
 
         return CustomScrollView(

@@ -84,7 +84,7 @@ class RankingCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              // 일치율
+              // 일치율 및 비교 건수
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -101,6 +101,14 @@ class RankingCard extends StatelessWidget {
                   Text(
                     '일치율',
                     style: AppTextStyles.caption,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '비교 ${member.comparisons.length}건',
+                    style: AppTextStyles.caption.copyWith(
+                      fontSize: 10,
+                      color: AppColors.textTertiary,
+                    ),
                   ),
                 ],
               ),

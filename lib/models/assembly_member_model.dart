@@ -5,7 +5,7 @@ class VoteComparison {
   final String billId;
   final String billName;
   final VoteType userVote;
-  final VoteType memberVote;
+  final MemberVoteStatus memberVote;
 
   const VoteComparison({
     required this.billId,
@@ -14,7 +14,7 @@ class VoteComparison {
     required this.memberVote,
   });
 
-  bool get isMatch => userVote == memberVote;
+  bool get isMatch => userVote == memberVote.comparableChoice;
 }
 
 /// 국회의원 모델
