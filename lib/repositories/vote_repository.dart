@@ -2,7 +2,6 @@ import '../models/vote_model.dart';
 import '../models/assembly_member_model.dart';
 import '../models/user_answer_model.dart';
 import '../services/vote_api_service.dart';
-import '../app/constants/app_constants.dart';
 
 /// 표결 데이터 Repository 인터페이스
 abstract class VoteRepository {

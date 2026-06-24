@@ -4,13 +4,11 @@ import '../../controllers/onboarding_controller.dart';
 import '../../controllers/home_controller.dart';
 import '../../controllers/bill_controller.dart';
 import '../../controllers/result_controller.dart';
-import '../../controllers/ranking_controller.dart';
 import '../../controllers/member_detail_controller.dart';
 import '../../views/onboarding_page.dart';
 import '../../views/main_tab_page.dart';
 import '../../views/bill_page.dart';
 import '../../views/result_page.dart';
-import '../../views/ranking_page.dart';
 import '../../views/member_detail_page.dart';
 import '../../controllers/history_controller.dart';
 
@@ -56,15 +54,7 @@ class AppPages {
       transition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 400),
     ),
-    GetPage(
-      name: AppRoutes.ranking,
-      page: () => const RankingPage(),
-      binding: BindingsBuilder(() {
-        Get.lazyPut(() => RankingController());
-      }),
-      transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 300),
-    ),
+
     GetPage(
       name: AppRoutes.memberDetail,
       page: () => const MemberDetailPage(),

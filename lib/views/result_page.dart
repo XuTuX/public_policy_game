@@ -7,6 +7,7 @@ import '../app/theme/app_text_styles.dart';
 import '../app/constants/app_constants.dart';
 import '../widgets/stat_card.dart';
 import '../widgets/radar_chart.dart';
+import '../widgets/match_result_card.dart';
 
 /// 결과 화면 — "오늘의 의정 활동 결과"
 class ResultPage extends StatelessWidget {
@@ -227,85 +228,93 @@ class ResultPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                ).animate().fadeIn(delay: 1000.ms, duration: 450.ms).slideY(
-                    begin: 0.15, end: 0, delay: 1000.ms, duration: 450.ms);
+                );
               }),
 
               const SizedBox(height: 32),
 
-              // ── 버튼들 ──
-              Row(
-                children: [
-                  // 결과 공유 버튼
-                  Expanded(
-                    flex: 2,
-                    child: SizedBox(
-                      height: 56,
-                      child: OutlinedButton(
-                        onPressed: controller.shareResult,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(
-                            color: AppColors.primary,
-                            width: 1.5,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
+              // ── 매칭 결과 (Best & Worst) ──
+              Obx(() {
+                if (controller.isStatsLoading.value) {
+                  return const SizedBox.shrink();
+                }
+                
+                final bestMatch = controller.bestMatch.value;
+                final worstMatch = controller.worstMatch.value;
+
+                if (bestMatch == null) {
+                  return const SizedBox.shrink();
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '나의 정치 소울메이트 🤝',
+                      style: AppTextStyles.titleLarge,
+                    ).animate().fadeIn(delay: 1100.ms, duration: 400.ms),
+                    const SizedBox(height: 16),
+                    MatchResultCard(
+                      member: bestMatch,
+                      isBestMatch: true,
+                    ).animate().fadeIn(delay: 1200.ms, duration: 400.ms).slideY(
+                          begin: 0.1,
+                          end: 0,
                         ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.share_rounded,
-                                color: AppColors.primary, size: 20),
-                            SizedBox(width: 6),
-                            Text(
-                              '공유',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                    if (worstMatch != null) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        '나와 가장 반대되는 성향의 의원은? 🙅‍♂️',
+                        style: AppTextStyles.titleLarge,
+                      ).animate().fadeIn(delay: 1300.ms, duration: 400.ms),
+                      const SizedBox(height: 16),
+                      MatchResultCard(
+                        member: worstMatch,
+                        isBestMatch: false,
+                      ).animate().fadeIn(delay: 1400.ms, duration: 400.ms).slideY(
+                            begin: 0.1,
+                            end: 0,
+                          ),
+                    ]
+                  ],
+                );
+              }),
+
+              const SizedBox(height: 32),
+
+              // 버튼들
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton(
+                  onPressed: controller.shareResult,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(
+                      color: AppColors.primary,
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  // 소울메이트 찾기 버튼
-                  Expanded(
-                    flex: 3,
-                    child: SizedBox(
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: controller.goToRanking,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('🤝', style: TextStyle(fontSize: 18)),
-                            SizedBox(width: 6),
-                            Text(
-                              '매칭 의원 찾기',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.share_rounded,
+                          color: AppColors.primary, size: 20),
+                      SizedBox(width: 6),
+                      Text(
+                        '결과 공유하기',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ).animate().fadeIn(delay: 1100.ms, duration: 400.ms),
+                ),
+              ).animate().fadeIn(delay: 1500.ms, duration: 400.ms),
 
               const SizedBox(height: 12),
               TextButton(
@@ -316,7 +325,7 @@ class ResultPage extends StatelessWidget {
                     color: AppColors.textTertiary,
                   ),
                 ),
-              ).animate().fadeIn(delay: 1200.ms, duration: 400.ms),
+              ).animate().fadeIn(delay: 1600.ms, duration: 400.ms),
 
               const SizedBox(height: 32),
             ],

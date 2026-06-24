@@ -4,7 +4,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../controllers/home_controller.dart';
 import '../app/theme/app_colors.dart';
 import '../app/theme/app_text_styles.dart';
-import '../widgets/loading_widget.dart';
 import '../widgets/app_error_widget.dart';
 
 /// 홈 페이지 — 내러티브 인트로
@@ -18,9 +17,7 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Obx(() {
-        if (controller.isLoading.value) {
-          return const LoadingWidget(message: '의원실에 출근 중입니다...');
-        }
+        // 제거된 로딩 위젯: UI에 즉시 진입하도록 수정
         if (controller.hasError.value) {
           return AppErrorWidget(
             message: controller.errorMessage.value,
@@ -128,7 +125,9 @@ class HomePage extends StatelessWidget {
                                 children: [
                                   const TextSpan(text: '의원님, 출근하셨군요.\n오늘 본회의에서 처리하셔야 할 안건이 '),
                                   TextSpan(
-                                    text: '${controller.billCount}건',
+                                    text: controller.isLoading.value
+                                        ? '...건'
+                                        : '${controller.billCount}건',
                                     style: const TextStyle(
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.w800,
@@ -155,29 +154,52 @@ class HomePage extends StatelessWidget {
                   width: double.infinity,
                   height: 64,
                   child: ElevatedButton(
-                    onPressed: controller.startVoting,
+                    onPressed: controller.isLoading.value
+                        ? null
+                        : controller.startVoting,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),
+                      disabledForegroundColor: Colors.white70,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      elevation: 4,
+                      elevation: controller.isLoading.value ? 0 : 4,
                       shadowColor: AppColors.primary.withValues(alpha: 0.4),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '업무 시작하기',
-                          style: AppTextStyles.titleLarge.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.arrow_forward_rounded),
-                      ],
+                      children: controller.isLoading.value
+                          ? [
+                              const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                '안건 불러오는 중...',
+                                style: AppTextStyles.titleLarge.copyWith(
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ]
+                          : [
+                              Text(
+                                '업무 시작하기',
+                                style: AppTextStyles.titleLarge.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.arrow_forward_rounded),
+                            ],
                     ),
                   ),
                 ).animate().fadeIn(delay: 800.ms, duration: 500.ms),

@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:get/get.dart';
 import 'package:flutter/foundation.dart';
 import '../models/bill_model.dart';
@@ -70,7 +71,7 @@ class HomeController extends GetxController {
   }
 
   /// 법안 수
-  int get billCount => bills.length;
+  int get billCount => min(bills.length, AppConstants.maxBillsPerSession);
 
   /// 총 예상 시간 (분)
   int get totalEstimatedMinutes =>

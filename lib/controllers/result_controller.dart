@@ -5,18 +5,24 @@ import '../models/vote_model.dart';
 import '../app/routes/app_routes.dart';
 import '../repositories/user_repository.dart';
 import '../repositories/bill_repository.dart';
+import '../repositories/vote_repository.dart';
+import '../models/assembly_member_model.dart';
 import '../app/constants/app_constants.dart';
 
 /// 결과 화면 컨트롤러
 class ResultController extends GetxController {
   final UserRepository _userRepository = UserRepository();
   final BillRepositoryImpl _billRepository = BillRepositoryImpl();
+  final VoteRepositoryImpl _voteRepository = VoteRepositoryImpl();
 
   late final List<UserAnswerModel> answers;
 
   // ── Observable State ──
   final categoryStats = <String, double>{}.obs; // 카테고리 -> 찬성 비율 (0.0 ~ 1.0)
   final isStatsLoading = true.obs;
+  
+  final bestMatch = Rxn<AssemblyMemberModel>();
+  final worstMatch = Rxn<AssemblyMemberModel>();
 
   @override
   void onInit() {
@@ -62,6 +68,20 @@ class ResultController extends GetxController {
       });
 
       categoryStats.value = stats;
+
+      // 3. 매칭 의원 계산
+      final members = await _voteRepository.getMatchedMembers(answers);
+      final targetComparisonsCount = answers.length;
+      final validMembers = members
+          .where((m) => m.comparisons.length == targetComparisonsCount)
+          .toList();
+
+      if (validMembers.isNotEmpty) {
+        bestMatch.value = validMembers.first;
+        if (validMembers.length > 1) {
+          worstMatch.value = validMembers.last;
+        }
+      }
     } catch (e) {
       // 로깅 실패 무시
     } finally {
@@ -96,9 +116,7 @@ class ResultController extends GetxController {
     await Share.share(text);
   }
 
-  void goToRanking() {
-    Get.toNamed(AppRoutes.ranking, arguments: answers);
-  }
+
 
   void goHome() {
     Get.offAllNamed(AppRoutes.home);
