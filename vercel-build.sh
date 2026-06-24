@@ -17,7 +17,7 @@ flutter pub get
 echo "Flutter Web 빌드 시작..."
 # Vercel의 환경변수를 다트의 define 변수로 주입합니다.
 flutter build web --release \
-  --dart-define=USE_MOCK_DATA=${USE_MOCK_DATA:-false} \
-  --dart-define=SUPABASE_URL=${SUPABASE_URL} \
-  --dart-define=SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY} \
+  --dart-define=USE_MOCK_DATA=${USE_MOCK_DATA:-true} \
+  --dart-define=SUPABASE_URL=${SUPABASE_URL:-"https://misquhwiizsosklhdldb.supabase.co"} \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY:-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pc3F1aHdpaXpzb3NrbGhkbGRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNjc5NzksImV4cCI6MjA5Nzg0Mzk3OX0.zgz2187NQIwP4lv84zAD6Ol1xAdMQdZFeUsJyKvBGxA"} \
   --dart-define=PUBLIC_APP_URL=${PUBLIC_APP_URL}

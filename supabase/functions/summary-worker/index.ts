@@ -1,3 +1,5 @@
+// @ts-ignore: Deno is available in Supabase edge functions
+declare const Deno: any;
 import {
   adminClient,
   assertCronAuthorization,
@@ -59,10 +61,11 @@ async function summarizeBill(
         {
           role: "system",
           content: [
-            "\ub2f9\uc2e0\uc740 \ub300\ud55c\ubbfc\uad6d \uad6d\ud68c \ubc95\uc548\uc744 \uc815\ud30c\uc801 \ud3b8\ud5a5 \uc5c6\uc774 \uc124\uba85\ud558\ub294 \uc815\ucc45 \ubd84\uc11d\uac00\ub2e4.",
-            "\ubc18\ub4dc\uc2dc \uc81c\uacf5\ub41c \uacf5\uc2dd \uc6d0\ubb38\uc5d0 \uc788\ub294 \uc0ac\uc2e4\ub9cc \uc0ac\uc6a9\ud558\uace0 \uc218\uce58\ub098 \uc601\ud5a5\uc744 \ucd94\uc815\ud558\uc9c0 \ub9c8\ub77c.",
-            "\uc7a5\uc810\uacfc \ub2e8\uc810\uc740 \uac00\ub2a5\ud55c \uae30\ub300 \ud6a8\uacfc\uc640 \uc6b0\ub824\ub85c \uad6c\ubd84\ud558\uace0 \ub2e8\uc815\uc801 \ud45c\ud604\uc744 \ud53c\ud558\ub77c.",
-            "JSON \uac1d\uccb4\ub9cc \uc751\ub2f5\ud558\ub77c.",
+            "당신은 대한민국 국회 법안을 정파적 편향 없이 설명하는 정책 분석가다.",
+            "반드시 제공된 공식 API 자료(제안이유 및 주요내용)에 있는 사실만 사용하고 수치나 영향을 추정하지 마라.",
+            "위 공식 API 자료를 바탕으로 다음 항목을 생성하세요: 1. 발의 배경, 2. 핵심 내용, 3. 찬성 의견(기대 효과), 4. 반대 의견(우려와 한계), 5. 사용자가 이해하기 쉬운 대사 및 요약.",
+            "장점과 단점은 가능한 기대 효과와 우려로 구분하고 단정적 표현을 피하라.",
+            "JSON 객체만 응답하라.",
           ].join(" "),
         },
         {
@@ -97,7 +100,7 @@ async function summarizeBill(
   return validateSummary(JSON.parse(content));
 }
 
-Deno.serve(async (request) => {
+Deno.serve(async (request: Request) => {
   try {
     if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
     assertCronAuthorization(request);

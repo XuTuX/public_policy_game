@@ -37,7 +37,8 @@ class AppConstants {
 
   static const String supabasePublishableKey = String.fromEnvironment(
     'SUPABASE_PUBLISHABLE_KEY',
-    defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pc3F1aHdpaXpzb3NrbGhkbGRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNjc5NzksImV4cCI6MjA5Nzg0Mzk3OX0.zgz2187NQIwP4lv84zAD6Ol1xAdMQdZFeUsJyKvBGxA',
+    defaultValue:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pc3F1aHdpaXpzb3NrbGhkbGRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNjc5NzksImV4cCI6MjA5Nzg0Mzk3OX0.zgz2187NQIwP4lv84zAD6Ol1xAdMQdZFeUsJyKvBGxA',
   );
 
   static bool get hasSupabaseConfiguration =>
@@ -65,28 +66,28 @@ class AppConstants {
 
   // ── Shadows ──
   static List<BoxShadow> get cardShadow => [
-        const BoxShadow(
-          color: Color(0x0A000000),
-          blurRadius: 10,
-          offset: Offset(0, 2),
-        ),
-        const BoxShadow(
-          color: Color(0x05000000),
-          blurRadius: 20,
-          offset: Offset(0, 4),
-        ),
-      ];
+    const BoxShadow(
+      color: Color(0x0A000000),
+      blurRadius: 10,
+      offset: Offset(0, 2),
+    ),
+    const BoxShadow(
+      color: Color(0x05000000),
+      blurRadius: 20,
+      offset: Offset(0, 4),
+    ),
+  ];
 
   static List<BoxShadow> get elevatedShadow => [
-        const BoxShadow(
-          color: Color(0x12000000),
-          blurRadius: 16,
-          offset: Offset(0, 4),
-        ),
-        const BoxShadow(
-          color: Color(0x08000000),
-          blurRadius: 32,
-          offset: Offset(0, 8),
-        ),
-      ];
+    const BoxShadow(
+      color: Color(0x12000000),
+      blurRadius: 16,
+      offset: Offset(0, 4),
+    ),
+    const BoxShadow(
+      color: Color(0x08000000),
+      blurRadius: 32,
+      offset: Offset(0, 8),
+    ),
+  ];
 }

@@ -1,3 +1,5 @@
+// @ts-ignore: Deno is available in Supabase edge functions
+declare const Deno: any;
 import {
   adminClient,
   assertCronAuthorization,
@@ -31,7 +33,7 @@ function voteDateValue(row: AssemblyRow): number {
   return Number(date.replaceAll("-", ""));
 }
 
-Deno.serve(async (request) => {
+Deno.serve(async (request: Request) => {
   let runId: string | null = null;
   let billsSeen = 0;
   let votesSeen = 0;
@@ -83,14 +85,15 @@ Deno.serve(async (request) => {
       const assemblyBillId = text(tally, "BILL_ID");
       try {
         const billNo = text(tally, "BILL_NO");
+        // "의안정보 통합 API"를 호출하여 법안 상세(목록) 데이터 조회
         const details = await fetchAssemblyRows(
           apiKey,
-          assemblyEndpoints.billDetail,
+          assemblyEndpoints.billList,
           { BILL_NO: billNo },
           20,
         );
         const detail = details.find((row) => text(row, "BILL_ID") === assemblyBillId) ?? details[0];
-        if (!detail) throw new Error("Bill detail was not found");
+        if (!detail) throw new Error("Bill detail was not found in 의안정보 통합 API");
 
         const billPayload = {
           assembly_bill_id: assemblyBillId,

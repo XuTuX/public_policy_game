@@ -3,8 +3,8 @@ const USER_AGENT =
   "Mozilla/5.0 (compatible; public-policy-game/1.0; +https://open.assembly.go.kr)";
 
 export const assemblyEndpoints = {
-  bills: "nzmimeepazxkubdpn",
-  billDetail: "ALLBILL",
+  billList: "ALLBILL", // 의안정보 통합 API
+  billSummary: "BPMBILLSUMMARY", // 국회 국회사무처_법률안 제안이유 및 주요내용
   members: "nwvrqwxyaytdsfvhu",
   voteTallies: "ncocpgfiaoituanbr",
   memberVotes: "nojepdqqaweusdfbi",
