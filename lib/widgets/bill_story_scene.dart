@@ -54,8 +54,6 @@ class BillChatScene extends StatelessWidget {
             height: 1.3,
             letterSpacing: -0.3,
           ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
         ),
         if (bill.voteDate != null || bill.dataAsOf != null) ...[
           const SizedBox(height: 8),
@@ -71,7 +69,7 @@ class BillChatScene extends StatelessWidget {
                 ),
               _SourceChip(
                 icon: Icons.auto_awesome_outlined,
-                label: '${bill.aiModel ?? 'DeepSeek'} AI 요약',
+                label: 'AI 요약',
               ),
               if (bill.officialSourceUrl.isNotEmpty)
                 TextButton.icon(
@@ -392,8 +390,6 @@ class BillDecisionBrief extends StatelessWidget {
             height: 1.3,
             letterSpacing: -0.3,
           ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 16),
 
