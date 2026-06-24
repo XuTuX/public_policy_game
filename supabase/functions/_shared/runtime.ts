@@ -38,7 +38,7 @@ export function jsonResponse(body: unknown, status = 200): Response {
 export function errorResponse(error: unknown): Response {
   const status = error instanceof HttpError ? error.status : 500;
   const message = error instanceof Error ? error.message : "Unknown error";
-  console.error(message);
+  console.error(error); console.error(message);
   return jsonResponse({ error: message }, status);
 }
 
