@@ -66,5 +66,29 @@ void main() {
       expect(bill.officialSourceUrl, contains('assembly.go.kr'));
       expect(bill.aiModel, 'deepseek-v4-flash');
     });
+
+    test('법안명에서 발의 의원 정보를 파싱 시점에 제거한다', () {
+      final billWithProposers = BillModel.fromJson({
+        'id': 'bill-id',
+        'billNo': '2200001',
+        'billName': '국가유산기본법 일부개정법률안 (홍길동의원 등 10인)',
+        'category': '기술',
+        'status': '가결',
+        'proposer': '홍길동',
+        'proposedDate': '2026-06-01',
+      });
+      final billWithSingleProposer = BillModel.fromJson({
+        'id': 'bill-id-2',
+        'billNo': '2200002',
+        'billName': '디지털포용법안 (김철수의원 발의)',
+        'category': '기술',
+        'status': '가결',
+        'proposer': '김철수',
+        'proposedDate': '2026-06-01',
+      });
+
+      expect(billWithProposers.billName, '국가유산기본법 일부개정법률안');
+      expect(billWithSingleProposer.billName, '디지털포용법안');
+    });
   });
 }

@@ -11,54 +11,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../controllers/bill_controller.dart';
 
 // =========================================================================
-// 1단계: 도입 소개 (Intro)
-// =========================================================================
-class Step1IntroScene extends StatelessWidget {
-  final BillModel bill;
-
-  const Step1IntroScene({super.key, required this.bill});
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.primarySurface,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              '${bill.categoryEmoji} ${bill.category}',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            _keepAll(bill.billName),
-            style: AppTextStyles.headlineMedium.copyWith(
-              height: 1.3,
-              letterSpacing: -0.3,
-            ),
-          ),
-          const SizedBox(height: 40),
-          _AideChatBubble(
-            text: '의원님, 이번 법안에 대해 순서대로 브리핑해 드리겠습니다.',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// =========================================================================
-// 2단계: 도입 배경 (Background) - 여러 개의 말풍선
+// 1단계: 도입 배경 (Background) - 여러 개의 말풍선
 // =========================================================================
 class Step2BackgroundScene extends StatefulWidget {
   final BillModel bill;
@@ -169,7 +122,30 @@ class _Step2BackgroundSceneState extends State<Step2BackgroundScene> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _StepHeader(title: '도입 배경', step: 2),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySurface,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${widget.bill.categoryEmoji} ${widget.bill.category}',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _keepAll(widget.bill.billName),
+                    style: AppTextStyles.headlineMedium.copyWith(
+                      height: 1.3,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  const _StepHeader(title: '도입 배경', step: 1),
                   const SizedBox(height: 24),
                   ..._messages.sublist(0, _visibleCount).asMap().entries.map((entry) {
                     final idx = entry.key;
@@ -411,7 +387,7 @@ class _Step3ProsSceneState extends State<Step3ProsScene> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _StepHeader(title: '찬성 논리', step: 3, color: AppColors.accentDark),
+                  const _StepHeader(title: '찬성 논리', step: 2, color: AppColors.accentDark),
                   const SizedBox(height: 16),
                   const _AideChatBubble(
                     text: '이 법안을 지지하는 사람들은 다음과 같이 이야기합니다.',
@@ -536,7 +512,7 @@ class _Step4ConsSceneState extends State<Step4ConsScene> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _StepHeader(title: '반대 및 우려사항', step: 4, color: AppColors.warning),
+                  const _StepHeader(title: '반대 및 우려사항', step: 3, color: AppColors.warning),
                   const SizedBox(height: 16),
                   const _AideChatBubble(
                     text: '반면, 이 법안에 우려를 표하는 사람들은 다음과 같은 부작용을 지적합니다.',
@@ -641,7 +617,7 @@ class _Step5SummarySceneState extends State<Step5SummaryScene> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _StepHeader(title: '보좌관 최종 정리', step: 5),
+                  const _StepHeader(title: '보좌관 최종 정리', step: 4),
                   const SizedBox(height: 24),
                   const _AideChatBubble(text: '의원님, 마지막으로 양측의 핵심 주장을 요약해 드립니다.'),
                   

@@ -92,7 +92,6 @@ class _BillPageState extends State<BillPage> {
                   _controller.setStep(index);
                 },
                 children: [
-                  Step1IntroScene(bill: bill),
                   Step2BackgroundScene(bill: bill),
                   Step3ProsScene(bill: bill),
                   Step4ConsScene(bill: bill),
@@ -148,8 +147,8 @@ class _SimpleProgressBar extends StatelessWidget {
       color: AppColors.surface,
       padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
       child: Obx(() {
-        // 5단계(0~4) 중 현재 위치를 표시
-        final stepProgress = (controller.currentStep.value + 1) / 5;
+        // 4단계(0~3) 중 현재 위치를 표시
+        final stepProgress = (controller.currentStep.value + 1) / 4;
         return ClipRRect(
           borderRadius: BorderRadius.circular(99),
           child: LinearProgressIndicator(
@@ -176,13 +175,13 @@ class _BottomPanel extends StatelessWidget {
     return Obx(() {
       final step = controller.currentStep.value;
 
-      // 5단계 (투표 화면)에서는 투표 직후 피드백이 있으면 하단 패널에 표시하고,
+      // 4단계 (투표 화면)에서는 투표 직후 피드백이 있으면 하단 패널에 표시하고,
       // 평소에는 '이전' 버튼만 표시하거나 숨길 수 있습니다.
       // 여기서는 투표 피드백이 있을 때만 렌더링하고, 평소에는 패널 자체를 가볍게 유지합니다.
       final isAnimating = controller.isAnimating.value;
       final lastVote = controller.lastVoteType.value;
 
-      if (step == 4) {
+      if (step == 3) {
         if (isAnimating && lastVote != null) {
           return Container(
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),

@@ -19,7 +19,7 @@ class BillController extends GetxController {
   final isLoading = true.obs;
   final isAnimating = false.obs;
   final lastVoteType = Rxn<VoteType>();
-  final currentStep = 0.obs; // 0~4 for the 5 steps
+  final currentStep = 0.obs; // 0~3 for the 4 steps
   final fastMode = false.obs;
   final isStepCompleted = false.obs;
 
@@ -28,13 +28,9 @@ class BillController extends GetxController {
     super.onInit();
     loadBills();
 
-    // 씬 전환 시 완료 상태 자동 제어 (첫 번째 씬인 인트로는 항상 완료 상태로 시작)
-    ever(currentStep, (step) {
-      if (step == 0) {
-        isStepCompleted.value = true;
-      } else {
-        isStepCompleted.value = false;
-      }
+    // 씬 전환 시 완료 상태 자동 리셋
+    ever(currentStep, (_) {
+      isStepCompleted.value = false;
     });
 
     ever(currentIndex, (_) {
@@ -75,7 +71,7 @@ class BillController extends GetxController {
 
   /// 다음 단계로 이동
   void nextStep() {
-    if (currentStep.value < 4) {
+    if (currentStep.value < 3) {
       currentStep.value++;
     }
   }
@@ -89,7 +85,7 @@ class BillController extends GetxController {
 
   /// 특정 단계로 바로 이동 (PageView 스와이프 등 연동용)
   void setStep(int step) {
-    if (step >= 0 && step <= 5) {
+    if (step >= 0 && step <= 3) {
       currentStep.value = step;
     }
   }
