@@ -78,113 +78,116 @@ class WebResponsiveWrapper extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // 좌측 브랜드 가이드 (너비가 1000px 이상일 때만 노출)
-                    if (size.width > 1000 && size.height >= 760)
+                    if (size.width > 1000 && size.height >= 600)
                       Expanded(
                         flex: 5,
                         child: Padding(
                           padding: const EdgeInsets.only(right: 64),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // 뱃지
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primarySurface,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: AppColors.primary
-                                        .withValues(alpha: 0.2),
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // 뱃지
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
                                   ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Text('🏛️',
-                                        style: TextStyle(fontSize: 14)),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      '국회 법안 투표 시뮬레이션 게임',
-                                      style: TextStyle(
-                                        color: AppColors.primary,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primarySurface,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: AppColors.primary
+                                          .withValues(alpha: 0.2),
                                     ),
-                                  ],
-                                ),
-                              )
-                                  .animate()
-                                  .fadeIn(duration: 400.ms)
-                                  .slideY(begin: -0.1, end: 0),
-                              const SizedBox(height: 24),
-
-                              // 타이틀 그라데이션 텍스트
-                              ShaderMask(
-                                shaderCallback: (bounds) =>
-                                    const LinearGradient(
-                                  colors: [
-                                    AppColors.primary,
-                                    AppColors.secondary
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ).createShader(bounds),
-                                child: const Text(
-                                  '오늘부터 국회의원',
-                                  style: TextStyle(
-                                    fontSize: 48,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
-                                    height: 1.2,
                                   ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text('🏛️',
+                                          style: TextStyle(fontSize: 14)),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '국회 법안 투표 시뮬레이션 게임',
+                                        style: TextStyle(
+                                          color: AppColors.primary,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                                    .animate()
+                                    .fadeIn(duration: 400.ms)
+                                    .slideY(begin: -0.1, end: 0),
+                                const SizedBox(height: 24),
+  
+                                // 타이틀 그라데이션 텍스트
+                                ShaderMask(
+                                  shaderCallback: (bounds) =>
+                                      const LinearGradient(
+                                    colors: [
+                                      AppColors.primary,
+                                      AppColors.secondary
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ).createShader(bounds),
+                                  child: const Text(
+                                    '오늘부터 국회의원',
+                                    style: TextStyle(
+                                      fontSize: 48,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                )
+                                    .animate()
+                                    .fadeIn(delay: 150.ms, duration: 400.ms),
+                                const SizedBox(height: 16),
+  
+                                Text(
+                                  '당신은 오늘부터 국회 의원실에 출근합니다.\n실제 상정된 법안들을 꼼꼼히 살피고,\n나라와 국민을 위한 최선의 표결을 내려보세요.',
+                                  style: AppTextStyles.bodyLarge.copyWith(
+                                    color: AppColors.textSecondary,
+                                    height: 1.6,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                )
+                                    .animate()
+                                    .fadeIn(delay: 300.ms, duration: 400.ms),
+                                const SizedBox(height: 40),
+  
+                                // 주요 피처 카드 목록
+                                _buildWebFeatureCard(
+                                  emoji: '📋',
+                                  title: 'AI 법안 요약 & 현장 생중계',
+                                  description:
+                                      '어려운 법안 조문을 쉽게 파악하고, 기대 효과와 현장의 우려 섞인 목소리를 직접 확인하세요.',
+                                  delayMs: 450,
                                 ),
-                              )
-                                  .animate()
-                                  .fadeIn(delay: 150.ms, duration: 400.ms),
-                              const SizedBox(height: 16),
-
-                              Text(
-                                '당신은 오늘부터 국회 의원실에 출근합니다.\n실제 상정된 법안들을 꼼꼼히 살피고,\n나라와 국민을 위한 최선의 표결을 내려보세요.',
-                                style: AppTextStyles.bodyLarge.copyWith(
-                                  color: AppColors.textSecondary,
-                                  height: 1.6,
-                                  fontWeight: FontWeight.w500,
+                                const SizedBox(height: 16),
+                                _buildWebFeatureCard(
+                                  emoji: '🗳️',
+                                  title: '나의 소중한 한 표',
+                                  description:
+                                      '찬성, 반대, 기권 등 나만의 올바른 소신을 투표로 표현하고 의정 기록에 남겨두세요.',
+                                  delayMs: 600,
                                 ),
-                              )
-                                  .animate()
-                                  .fadeIn(delay: 300.ms, duration: 400.ms),
-                              const SizedBox(height: 40),
-
-                              // 주요 피처 카드 목록
-                              _buildWebFeatureCard(
-                                emoji: '📋',
-                                title: 'AI 법안 요약 & 현장 생중계',
-                                description:
-                                    '어려운 법안 조문을 쉽게 파악하고, 기대 효과와 현장의 우려 섞인 목소리를 직접 확인하세요.',
-                                delayMs: 450,
-                              ),
-                              const SizedBox(height: 16),
-                              _buildWebFeatureCard(
-                                emoji: '🗳️',
-                                title: '나의 소중한 한 표',
-                                description:
-                                    '찬성, 반대, 기권 등 나만의 올바른 소신을 투표로 표현하고 의정 기록에 남겨두세요.',
-                                delayMs: 600,
-                              ),
-                              const SizedBox(height: 16),
-                              _buildWebFeatureCard(
-                                emoji: '🤝',
-                                title: '소울메이트 의원 매칭',
-                                description:
-                                    '의정 활동 결과를 바탕으로 내 투표 성향을 분석해 나와 생각과 일치율이 가장 높은 국회의원을 찾아줍니다.',
-                                delayMs: 750,
-                              ),
-                            ],
+                                const SizedBox(height: 16),
+                                _buildWebFeatureCard(
+                                  emoji: '🤝',
+                                  title: '소울메이트 의원 매칭',
+                                  description:
+                                      '의정 활동 결과를 바탕으로 내 투표 성향을 분석해 나와 생각과 일치율이 가장 높은 국회의원을 찾아줍니다.',
+                                  delayMs: 750,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

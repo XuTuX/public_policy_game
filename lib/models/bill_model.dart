@@ -37,10 +37,14 @@ class BillModel {
 
   /// JSON → BillModel (API 응답 파싱용)
   factory BillModel.fromJson(Map<String, dynamic> json) {
+    final rawBillName = json['billName'] as String? ?? '';
+    // '(OOO의원 등 OO인)' 또는 '(OOO의원 발의)' 형태의 발의자 정보 제거
+    final cleanBillName = rawBillName.replaceAll(RegExp(r'\s*\(.*?의원.*?\)$'), '');
+
     return BillModel(
       id: json['id'] as String? ?? '',
       billNo: json['billNo'] as String? ?? '',
-      billName: json['billName'] as String? ?? '',
+      billName: cleanBillName,
       category: json['category'] as String? ?? '기타',
       status: json['status'] as String? ?? '',
       proposer: json['proposer'] as String? ?? '',

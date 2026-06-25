@@ -6,6 +6,7 @@ import '../app/theme/app_colors.dart';
 import '../app/theme/app_text_styles.dart';
 import '../app/constants/app_constants.dart';
 import '../models/vote_model.dart';
+import '../models/user_answer_model.dart';
 
 /// 사용자의 누적 투표 기록(히스토리)을 조회하는 화면
 class HistoryPage extends StatelessWidget {
@@ -269,7 +270,7 @@ class HistoryPage extends StatelessWidget {
   }
 
   /// 개별 기록 클릭 시 모달창 출력
-  void _showHistoryDetail(BuildContext context, dynamic item, String dateStr) {
+  void _showHistoryDetail(BuildContext context, UserAnswerModel item, String dateStr) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -332,6 +333,28 @@ class HistoryPage extends StatelessWidget {
               dateStr,
               style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
             ),
+            if (item.gameSetId.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                '참여 게임 세트',
+                style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  item.gameSetId,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontFamily: 'monospace',
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
         actions: [

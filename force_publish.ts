@@ -12,7 +12,7 @@ async function run() {
     .not('vote_date', 'is', null)
     .order('vote_date', { ascending: false })
     .order('bill_no', { ascending: false })
-    .limit(10);
+    .limit(50);
     
   if (billsErr || !bills || bills.length === 0) {
     console.error("Failed to fetch bills", billsErr);

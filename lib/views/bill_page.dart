@@ -266,10 +266,14 @@ class _BottomPanel extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: ElevatedButton(
-                    onPressed: controller.nextStep,
+                    onPressed: controller.isStepCompleted.value
+                        ? controller.nextStep
+                        : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.3),
+                      disabledForegroundColor: Colors.white70,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),

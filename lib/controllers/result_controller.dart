@@ -71,9 +71,8 @@ class ResultController extends GetxController {
 
       // 3. 매칭 의원 계산
       final members = await _voteRepository.getMatchedMembers(answers);
-      final targetComparisonsCount = answers.length;
       final validMembers = members
-          .where((m) => m.comparisons.length == targetComparisonsCount)
+          .where((m) => m.comparisons.isNotEmpty)
           .toList();
 
       if (validMembers.isNotEmpty) {

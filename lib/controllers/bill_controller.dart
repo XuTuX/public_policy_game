@@ -19,13 +19,27 @@ class BillController extends GetxController {
   final isLoading = true.obs;
   final isAnimating = false.obs;
   final lastVoteType = Rxn<VoteType>();
-  final currentStep = 0.obs; // 0~5 for the 6 steps
+  final currentStep = 0.obs; // 0~4 for the 5 steps
   final fastMode = false.obs;
+  final isStepCompleted = false.obs;
 
   @override
   void onInit() {
     super.onInit();
     loadBills();
+
+    // 씬 전환 시 완료 상태 자동 제어 (첫 번째 씬인 인트로는 항상 완료 상태로 시작)
+    ever(currentStep, (step) {
+      if (step == 0) {
+        isStepCompleted.value = true;
+      } else {
+        isStepCompleted.value = false;
+      }
+    });
+
+    ever(currentIndex, (_) {
+      isStepCompleted.value = false;
+    });
   }
 
   /// 법안 목록 로드
@@ -61,7 +75,7 @@ class BillController extends GetxController {
 
   /// 다음 단계로 이동
   void nextStep() {
-    if (currentStep.value < 5) {
+    if (currentStep.value < 4) {
       currentStep.value++;
     }
   }

@@ -76,7 +76,7 @@ class RadarChartPainter extends CustomPainter {
           center.dy + r * sin(angle),
         );
         if (j == 0) {
-          path.moveTo(point.dx, point.pointInside(center.dy, r, angle));
+          path.moveTo(point.dx, point.dy);
         } else {
           path.lineTo(point.dx, point.dy);
         }
@@ -163,8 +163,4 @@ class RadarChartPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-extension OffsetHelper on Offset {
-  double pointInside(double centerDy, double r, double angle) {
-    return centerDy + r * sin(angle);
-  }
-}
+
