@@ -30,16 +30,22 @@ class AppConstants {
     defaultValue: '',
   );
 
-  static const String supabaseUrl = String.fromEnvironment(
-    'SUPABASE_URL',
-    defaultValue: 'https://misquhwiizsosklhdldb.supabase.co',
-  );
+  static const String _envSupabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  static String get supabaseUrl => _envSupabaseUrl.isEmpty
+      ? 'https://misquhwiizsosklhdldb.supabase.co'
+      : _envSupabaseUrl;
 
-  static const String supabasePublishableKey = String.fromEnvironment(
+  static const String _envSupabasePublishableKey = String.fromEnvironment(
     'SUPABASE_PUBLISHABLE_KEY',
-    defaultValue:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pc3F1aHdpaXpzb3NrbGhkbGRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNjc5NzksImV4cCI6MjA5Nzg0Mzk3OX0.zgz2187NQIwP4lv84zAD6Ol1xAdMQdZFeUsJyKvBGxA',
   );
+  static const String _envSupabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+  );
+  static String get supabasePublishableKey {
+    if (_envSupabasePublishableKey.isNotEmpty) return _envSupabasePublishableKey;
+    if (_envSupabaseAnonKey.isNotEmpty) return _envSupabaseAnonKey;
+    return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pc3F1aHdpaXpzb3NrbGhkbGRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNjc5NzksImV4cCI6MjA5Nzg0Mzk3OX0.zgz2187NQIwP4lv84zAD6Ol1xAdMQdZFeUsJyKvBGxA';
+  }
 
   static bool get hasSupabaseConfiguration =>
       supabaseUrl.isNotEmpty && supabasePublishableKey.isNotEmpty;
