@@ -4,21 +4,20 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 async function run() {
-  const { data, error } = await supabase.rpc("publish_latest_game_set");
-  console.log("Publish RPC:", data, error);
-
-  // Let's also check how many valid bills there are
-  const { data: bills, error: err2 } = await supabase.from('assembly_bills')
-    .select('id, official_yes_count, member_votes(count)');
-  console.log("Total bills:", bills?.length, err2);
-  let validCount = 0;
-  if (bills) {
-    for (const b of bills) {
-       // Since we can't easily do the full complex join here, just a rough check
-       // But wait, the criteria is strict.
-       if (b.member_votes && b.member_votes[0].count > 0) validCount++;
-    }
+  const { data: summaries, error } = await supabase.from('bill_summaries')
+    .select('background_dialogue')
+    .limit(5);
+  
+  if (error) {
+    console.error("Error fetching summaries:", error);
+    return;
   }
-  console.log("Bills with votes:", validCount);
+  
+  console.log("Sample Background Dialogues:");
+  summaries.forEach((s, idx) => {
+    console.log(`\n--- Bill ${idx + 1} ---`);
+    console.log(s.background_dialogue);
+  });
 }
 run();
+

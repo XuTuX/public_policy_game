@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'argument_model.dart';
+
 /// 법안 모델
 class BillModel {
   final String id;
@@ -146,6 +149,50 @@ class BillNarrative {
       'concernImpact': concernImpact,
     };
   }
+
+  /// 도입 배경 말풍선을 리스트로 반환 (JSON 문자열 대응 및 긴 문장 분리)
+  List<String> get backgroundDialoguesList {
+    if (backgroundDialogue.trim().isEmpty) return [];
+
+    try {
+      final decoded = jsonDecode(backgroundDialogue);
+      if (decoded is List) {
+        // 이미 리스트 형태(티키타카 말풍선 단위)로 잘 제공되었다면 문장 단위로 쪼개지 않고 그대로 반환합니다.
+        return decoded.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList();
+      }
+    } catch (_) {
+      // JSON 파싱 실패 시 일반 텍스트 처리로 넘어감
+    }
+
+    List<String> initialList = backgroundDialogue.split('\n').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+
+    // AI가 문단을 통째로 주거나 긴 텍스트를 줄 경우, '짧은 글로 하나하나 읽기 편하게' 강제 분리
+    List<String> finalBubbles = [];
+    for (final item in initialList) {
+      // 줄바꿈이 있으면 먼저 분리
+      final lines = item.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty);
+      
+      for (final line in lines) {
+        // ". " (마침표+공백) 기준으로 문장 분리
+        final sentences = line.split('. ');
+        for (int i = 0; i < sentences.length; i++) {
+          String s = sentences[i].trim();
+          if (s.isEmpty) continue;
+          
+          // 분리되면서 날아간 마침표 복구 (마지막 문장이 아니거나 원래 마침표가 없던 경우)
+          if (!s.endsWith('.') && !s.endsWith('!') && !s.endsWith('?')) {
+            s = '$s.';
+          }
+          finalBubbles.add(s);
+        }
+      }
+    }
+
+    if (finalBubbles.isEmpty) {
+      return ['배경 정보를 준비하지 못했습니다.'];
+    }
+    return finalBubbles;
+  }
 }
 
 /// LLM 요약 모델
@@ -170,5 +217,15 @@ class LlmSummary {
 
   Map<String, dynamic> toJson() {
     return {'background': background, 'pros': pros, 'cons': cons};
+  }
+
+  /// 찬성 의견 리스트
+  List<ArgumentModel> get prosList {
+    return ArgumentModel.parseList(pros, '찬성 논리');
+  }
+
+  /// 반대 의견 리스트
+  List<ArgumentModel> get consList {
+    return ArgumentModel.parseList(cons, '우려 사항');
   }
 }

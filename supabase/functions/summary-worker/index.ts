@@ -8,7 +8,7 @@ import {
   requiredEnv,
 } from "../_shared/runtime.ts";
 
-const PROMPT_VERSION = "bill-neutral-summary-v2-conversational";
+const PROMPT_VERSION = "bill-storytelling-ux-v1";
 const REQUIRED_FIELDS = [
   "category",
   "background",
@@ -28,17 +28,26 @@ function validateSummary(value: unknown): Summary {
     throw new Error("DeepSeek returned a non-object JSON value");
   }
   const record = value as Record<string, unknown>;
+  const result: Record<string, string> = {};
+  
   for (const field of REQUIRED_FIELDS) {
-    if (typeof record[field] !== "string" || !record[field].trim()) {
+    if (record[field] === undefined || record[field] === null) {
       throw new Error(`DeepSeek response is missing ${field}`);
     }
-    if (record[field].trim().length > 1500) {
+    
+    // If the field is an object/array, stringify it so we can store it in text columns
+    let val = record[field];
+    if (typeof val !== "string") {
+      val = JSON.stringify(val);
+    }
+    
+    const strVal = (val as string).trim();
+    if (strVal.length > 5000) {
       throw new Error(`DeepSeek response field ${field} is too long`);
     }
+    result[field] = strVal;
   }
-  return Object.fromEntries(
-    REQUIRED_FIELDS.map((field) => [field, (record[field] as string).trim()]),
-  ) as Summary;
+  return result as Summary;
 }
 
 async function summarizeBill(
@@ -62,11 +71,12 @@ async function summarizeBill(
           role: "system",
           content: [
             "당신은 대한민국 국회 법안을 일반인에게 알기 쉽게 설명해주는 친절한 보좌관입니다.",
-            "모든 문장(배경, 장단점, 대사 등)은 딱딱한 문어체(~한다, ~임)가 아닌, 실제 사람과 대화하듯 자연스럽고 친절한 구어체(~해요, ~습니다, ~군요 등)로 작성해주세요.",
-            "반드시 제공된 공식 API 자료(제안이유 및 주요내용)에 있는 사실만 사용하고 수치나 영향을 임의로 추정하지 마세요.",
-            "위 공식 API 자료를 바탕으로 다음 항목을 생성하세요: 1. 발의 배경, 2. 핵심 내용, 3. 찬성 의견(기대 효과), 4. 반대 의견(우려와 한계), 5. 사용자가 이해하기 쉬운 대사 및 요약.",
-            "장점과 단점은 가능한 기대 효과와 우려로 구분하고 단정적 표현을 피해주세요.",
-            "JSON 객체만 응답하세요.",
+            "모든 대사와 설명은 실제 사람과 대화하듯 자연스럽고 친절한 구어체(~해요, ~습니다, ~군요 등)로 작성해주세요.",
+            "사용자가 국회의원이 되어 보좌관의 브리핑을 듣는 스토리텔링 형태를 위해 다음 항목들을 구체적으로 생성해야 합니다.",
+            "1. 도입 배경 (backgroundDialogue): 3~6개의 말풍선으로 순차적으로 설명할 수 있는 배열. 최근 사회 문제, 발의 이유, 정부의 해결 목표 등을 채팅하듯 구성하세요.",
+            "2. 찬성 논리 (pros): 최소 3~5개의 찬성 논리를 담은 배열. 각 항목은 제목(title), 짧은 설명(description), 구체적인 사례(example)를 포함해야 합니다.",
+            "3. 반대 논리 (cons): 최소 3~5개의 우려사항/반대 논리를 담은 배열. 예산 부담, 형평성, 집행 가능성, 악용 가능성, 정책 부작용 관점에서 검토가 필요한 쟁점을 중립적인 톤으로 작성하세요. 원문에 우려가 없어도 반드시 생성하세요.",
+            "반드시 JSON 객체만 응답하세요."
           ].join(" "),
         },
         {
@@ -76,14 +86,30 @@ async function summarizeBill(
             officialSource: sourceText.slice(0, 60_000),
             output: {
               category: "\uad50\uc721|\ud658\uacbd|\uacbd\uc81c|\ubcf5\uc9c0|\uae30\uc220|\uc548\ubcf4|\ubb38\ud654|\ub178\ub3d9|\uc8fc\uac70|\uad50\ud1b5|\uae30\ud0c0 \uc911 \ud558\ub098",
-              background: "\ubc1c\uc758 \ubc30\uacbd 2~4\ubb38\uc7a5",
-              pros: "\uae30\ub300 \ud6a8\uacfc 2~4\ubb38\uc7a5",
-              cons: "\uc6b0\ub824\uc640 \ud55c\uacc4 2~4\ubb38\uc7a5",
-              backgroundDialogue: "\uac8c\uc784 \uc7a5\uba74\uc6a9 \ubc30\uacbd \uc124\uba85 1~2\ubb38\uc7a5",
+              background: "\ubc1c\uc758 \ubc30\uacbd 2~4\ubb38\uc7a5 (\uae30\uc874 \ud638\ud658\uc6a9)",
+              pros: [
+                {
+                  title: "\ucc2c\uc131 \ub17c\ub9ac \uc81c\ubaa9 (3~5\uac1c \ud544\uc218)",
+                  description: "\uc9e7\uc740 \uc124\uba85",
+                  example: "\uad6c\uccb4\uc801\uc778 \uc0ac\ub840 \ub610\ub294 \ud6a8\uacfc"
+                }
+              ],
+              cons: [
+                {
+                  title: "\uc6b0\ub824\uc0ac\ud56d/\ubc18\ub300 \ub17c\ub9ac \uc81c\ubaa9 (\uc608\uc0b0, \ud615\ud3c9\uc131, \ubd80\uc791\uc6a9 \ub4f1 \uc911\ub9bd\uc801 3~5\uac1c \ud544\uc218)",
+                  description: "\uc9e7\uc740 \uc124\uba85",
+                  example: "\uad6c\uccb4\uc801\uc778 \uc0ac\ub840 \ub610\ub294 \uac80\ud1a0 \uc7c1\uc810"
+                }
+              ],
+              backgroundDialogue: [
+                "\ubcf4\uc88c\uad00 \ub9d0\ud48d\uc120 1 (3~6\uac1c \ud544\uc218)",
+                "\ubcf4\uc88c\uad00 \ub9d0\ud48d\uc120 2",
+                "\ubcf4\uc88c\uad00 \ub9d0\ud48d\uc120 3"
+              ],
               positiveDialogue: "\uae30\ub300 \ud6a8\uacfc\ub97c \ubcf4\uc5ec\uc8fc\ub294 \uc911\ub9bd\uc801 \ub300\uc0ac 1~2\ubb38\uc7a5",
               concernDialogue: "\uc6b0\ub824\ub97c \ubcf4\uc5ec\uc8fc\ub294 \uc911\ub9bd\uc801 \ub300\uc0ac 1~2\ubb38\uc7a5",
-              positiveImpact: "\ud575\uc2ec \uae30\ub300 \ud6a8\uacfc 30\uc790 \uc774\ub0b4",
-              concernImpact: "\ud575\uc2ec \uc6b0\ub824 30\uc790 \uc774\ub0b4",
+              positiveImpact: "\ud575\uc2ec \uae30\ub300 \ud6a8\uacfc 30\uc790 \uc774\ub0b4 (\ucd5c\uc885 \uc815\ub9ac\uc6a9)",
+              concernImpact: "\ud575\uc2ec \uc6b0\ub824 30\uc790 \uc774\ub0b4 (\ucd5c\uc885 \uc815\ub9ac\uc6a9)",
             },
           }),
         },

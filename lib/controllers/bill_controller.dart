@@ -19,10 +19,7 @@ class BillController extends GetxController {
   final isLoading = true.obs;
   final isAnimating = false.obs;
   final lastVoteType = Rxn<VoteType>();
-  final selectedTab = 0.obs; // 0: 기대 효과, 1: 우려 사항
-  final visitedPros = true.obs;
-  final visitedCons = false.obs;
-  final isVoteMode = false.obs;
+  final currentStep = 0.obs; // 0~5 for the 6 steps
   final fastMode = false.obs;
 
   @override
@@ -62,34 +59,25 @@ class BillController extends GetxController {
   /// 남은 법안 수
   int get remainingBills => bills.length - currentIndex.value - 1;
 
-  /// 기대 효과/우려 사항 탭 변경 및 표결 전환 로직
-  void nextScene() {
-    if (selectedTab.value == 0) {
-      selectedTab.value = 1;
-      visitedCons.value = true;
-    } else if (selectedTab.value == 1) {
-      isVoteMode.value = true;
+  /// 다음 단계로 이동
+  void nextStep() {
+    if (currentStep.value < 5) {
+      currentStep.value++;
     }
   }
 
-  void previousScene() {
-    if (isVoteMode.value) {
-      isVoteMode.value = false;
-    } else if (selectedTab.value == 1) {
-      selectedTab.value = 0;
+  /// 이전 단계로 이동
+  void previousStep() {
+    if (currentStep.value > 0) {
+      currentStep.value--;
     }
   }
 
-  void skipToDecision() {
-    visitedPros.value = true;
-    visitedCons.value = true;
-    isVoteMode.value = true;
-  }
-
-  void selectTab(int index) {
-    selectedTab.value = index;
-    if (index == 0) visitedPros.value = true;
-    if (index == 1) visitedCons.value = true;
+  /// 특정 단계로 바로 이동 (PageView 스와이프 등 연동용)
+  void setStep(int step) {
+    if (step >= 0 && step <= 5) {
+      currentStep.value = step;
+    }
   }
 
   void toggleFastMode() {
@@ -133,10 +121,7 @@ class BillController extends GetxController {
 
     // 다음 법안 또는 결과 화면으로
     if (currentIndex.value < bills.length - 1) {
-      selectedTab.value = 0;
-      visitedPros.value = true;
-      visitedCons.value = false;
-      isVoteMode.value = false;
+      currentStep.value = 0;
       currentIndex.value++;
     } else {
       // 모든 법안 완료 → 결과 화면

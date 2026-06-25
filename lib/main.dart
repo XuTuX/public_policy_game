@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app/theme/app_theme.dart';
 import 'app/routes/app_routes.dart';
 import 'app/routes/app_pages.dart';
@@ -12,6 +13,10 @@ import 'widgets/web_responsive_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 웹에서 한글 폰트(Noto Sans KR)가 로드되기 전에 네모(tofu)로 깨지는 현상 방지
+  GoogleFonts.notoSansKr();
+  await GoogleFonts.pendingFonts();
 
   // 상태바 스타일 설정 (밝은 배경에 어두운 아이콘)
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(

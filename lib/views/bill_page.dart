@@ -7,16 +7,49 @@ import '../app/theme/app_colors.dart';
 import '../app/theme/app_text_styles.dart';
 import '../widgets/bill_story_scene.dart';
 import '../widgets/loading_widget.dart';
-import '../widgets/narrative_vote_button.dart';
 
-/// 법안 미션 화면 — 채팅형 UI로 한 화면에 배경·장점·부작용을 보여주고 바로 표결
-class BillPage extends StatelessWidget {
+/// 법안 미션 화면 — 6단계 스토리텔링 기반 UX
+class BillPage extends StatefulWidget {
   const BillPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<BillController>();
+  State<BillPage> createState() => _BillPageState();
+}
 
+class _BillPageState extends State<BillPage> {
+  final PageController _pageController = PageController();
+  final BillController _controller = Get.find<BillController>();
+
+  @override
+  void initState() {
+    super.initState();
+    // currentStep이 변경될 때 PageView를 동기화
+    ever(_controller.currentStep, (step) {
+      if (_pageController.hasClients && _pageController.page?.round() != step) {
+        _pageController.animateToPage(
+          step,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+
+    // 법안이 바뀔 때 (currentIndex 변경 시) currentStep이 0으로 초기화되는데, 이때 PageView도 0으로 바로 이동
+    ever(_controller.currentIndex, (_) {
+      if (_pageController.hasClients) {
+        _pageController.jumpToPage(0);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -28,7 +61,7 @@ class BillPage extends StatelessWidget {
         ),
         title: Obx(
           () => Text(
-            '법안 ${controller.progressText}',
+            '법안 ${_controller.progressText}',
             style: AppTextStyles.headlineSmall,
           ),
         ),
@@ -36,57 +69,40 @@ class BillPage extends StatelessWidget {
         elevation: 0,
       ),
       body: Obx(() {
-        if (controller.isLoading.value) {
+        if (_controller.isLoading.value) {
           return const LoadingWidget(message: '법안 서류를 준비 중입니다...');
         }
 
-        final bill = controller.currentBill;
+        final bill = _controller.currentBill;
         if (bill == null) {
           return const Center(child: Text('법안이 없습니다'));
         }
 
-        final isVoteMode = controller.isVoteMode.value;
-
         return Column(
           children: [
             // ── 진행 바 (심플) ──
-            _SimpleProgressBar(controller: controller),
+            _SimpleProgressBar(controller: _controller),
 
-            // ── 콘텐츠 영역 (탐색 모드 vs 표결 모드) ──
+            // ── 단계별 페이지 뷰 ──
             Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                transitionBuilder: (child, animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0.0, 0.03),
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: child,
-                    ),
-                  );
+              child: PageView(
+                controller: _pageController,
+                physics: const BouncingScrollPhysics(),
+                onPageChanged: (index) {
+                  _controller.setStep(index);
                 },
-                child: SingleChildScrollView(
-                  key: ValueKey('${bill.id}-$isVoteMode'),
-                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
-                  child: isVoteMode
-                      ? BillDecisionBrief(bill: bill)
-                      : BillChatScene(
-                          bill: bill,
-                          selectedTab: controller.selectedTab.value,
-                          showConsRedDot: !controller.visitedCons.value,
-                          onTabSelected: controller.selectTab,
-                        ),
-                ),
+                children: [
+                  Step1IntroScene(bill: bill),
+                  Step2BackgroundScene(bill: bill),
+                  Step3ProsScene(bill: bill),
+                  Step4ConsScene(bill: bill),
+                  Step5SummaryScene(bill: bill, controller: _controller),
+                ],
               ),
             ),
 
             // ── 하단 패널 ──
-            isVoteMode
-                ? _VotePanel(controller: controller, bill: bill)
-                : _NextScenePanel(controller: controller),
+            _BottomPanel(controller: _controller, bill: bill),
           ],
         );
       }),
@@ -120,7 +136,7 @@ class BillPage extends StatelessWidget {
   }
 }
 
-/// 상단 심플 진행 바
+/// 상단 심플 진행 바 (현재 단계 표시)
 class _SimpleProgressBar extends StatelessWidget {
   final BillController controller;
 
@@ -132,15 +148,15 @@ class _SimpleProgressBar extends StatelessWidget {
       color: AppColors.surface,
       padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
       child: Obx(() {
-        final progress = controller.progress;
+        // 5단계(0~4) 중 현재 위치를 표시
+        final stepProgress = (controller.currentStep.value + 1) / 5;
         return ClipRRect(
           borderRadius: BorderRadius.circular(99),
           child: LinearProgressIndicator(
-            value: progress,
+            value: stepProgress,
             minHeight: 4,
             backgroundColor: AppColors.divider,
-            valueColor:
-                const AlwaysStoppedAnimation<Color>(AppColors.primary),
+            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
           ),
         );
       }),
@@ -148,103 +164,137 @@ class _SimpleProgressBar extends StatelessWidget {
   }
 }
 
-/// 하단 표결 패널 — 바로 투표 가능
-class _VotePanel extends StatelessWidget {
+/// 하단 컨트롤 패널 (1~4단계는 다음/이전 버튼, 5단계는 이전 버튼만)
+class _BottomPanel extends StatelessWidget {
   final BillController controller;
   final BillModel bill;
 
-  const _VotePanel({required this.controller, required this.bill});
+  const _BottomPanel({required this.controller, required this.bill});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
-      child: Obx(() {
-        final isAnimating = controller.isAnimating.value;
-        final lastVote = controller.lastVoteType.value;
+    return Obx(() {
+      final step = controller.currentStep.value;
 
-        // 투표 후 피드백
+      // 5단계 (투표 화면)에서는 투표 직후 피드백이 있으면 하단 패널에 표시하고,
+      // 평소에는 '이전' 버튼만 표시하거나 숨길 수 있습니다.
+      // 여기서는 투표 피드백이 있을 때만 렌더링하고, 평소에는 패널 자체를 가볍게 유지합니다.
+      final isAnimating = controller.isAnimating.value;
+      final lastVote = controller.lastVoteType.value;
+
+      if (step == 4) {
         if (isAnimating && lastVote != null) {
-          return _VoteFeedback(voteType: lastVote, bill: bill);
+          return Container(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, -3),
+                ),
+              ],
+            ),
+            child: _VoteFeedback(voteType: lastVote, bill: bill),
+          );
         }
+        
+        // 투표 대기 상태일 때는 '이전' 버튼만 간략하게 제공
+        return Container(
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: controller.previousStep,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    side: BorderSide(color: AppColors.divider),
+                  ),
+                  child: const Text('이전 단계로'),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
 
-        // 투표 선택지
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '이 법안에 대한 의원님의 판단은?',
-              style: AppTextStyles.labelLarge.copyWith(
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: NarrativeVoteButton(
-                      voteType: VoteType.yes,
-                      title: '찬성',
-                      description: '기대 효과가\n더 크다',
-                      enabled: !isAnimating,
-                      isSelected: false,
-                      onPressed: () => controller.vote(VoteType.yes),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: NarrativeVoteButton(
-                      voteType: VoteType.abstain,
-                      title: '기권',
-                      description: '판단하기\n어렵다',
-                      enabled: !isAnimating,
-                      isSelected: false,
-                      onPressed: () => controller.vote(VoteType.abstain),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: NarrativeVoteButton(
-                      voteType: VoteType.no,
-                      title: '반대',
-                      description: '부작용 우려가\n더 크다',
-                      enabled: !isAnimating,
-                      isSelected: false,
-                      onPressed: () => controller.vote(VoteType.no),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: controller.previousScene,
-              icon: const Icon(Icons.arrow_back_rounded, size: 16),
-              label: const Text('의견 다시 보기'),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.textSecondary,
-                visualDensity: VisualDensity.compact,
-              ),
+      // 1~4단계 (이전/다음 버튼)
+      return Container(
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 12,
+              offset: const Offset(0, -3),
             ),
           ],
-        );
-      }),
-    );
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                if (step > 0)
+                  Expanded(
+                    flex: 1,
+                    child: OutlinedButton(
+                      onPressed: controller.previousStep,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        side: BorderSide(color: AppColors.divider),
+                      ),
+                      child: const Text('이전'),
+                    ),
+                  ),
+                if (step > 0) const SizedBox(width: 8),
+                Expanded(
+                  flex: 3,
+                  child: ElevatedButton(
+                    onPressed: controller.nextStep,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('다음', style: AppTextStyles.buttonLarge),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward_rounded, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
+
+
 
 /// 투표 직후 피드백 표시
 class _VoteFeedback extends StatelessWidget {
@@ -255,23 +305,22 @@ class _VoteFeedback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final narrative = bill.narrative;
     final (icon, title, detail, color) = switch (voteType) {
       VoteType.yes => (
         Icons.check_circle_rounded,
         '찬성 의견을 기록했습니다',
-        narrative?.positiveImpact ?? '기대 효과에 더 무게를 두었습니다.',
+        '기대 효과에 더 무게를 두었습니다.',
         AppColors.voteYes,
       ),
       VoteType.no => (
         Icons.cancel_rounded,
         '반대 의견을 기록했습니다',
-        narrative?.concernImpact ?? '부작용 우려에 더 무게를 두었습니다.',
+        '부작용 우려에 더 무게를 두었습니다.',
         AppColors.voteNo,
       ),
       VoteType.abstain => (
         Icons.remove_circle_rounded,
-        '추가 검토 의견을 기록했습니다',
+        '기권 의견을 기록했습니다',
         '기대 효과와 부작용을 더 살펴봐야 합니다.',
         AppColors.textSecondary,
       ),
@@ -304,87 +353,6 @@ class _VoteFeedback extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _NextScenePanel extends StatelessWidget {
-  final BillController controller;
-
-  const _NextScenePanel({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
-      child: Obx(() {
-        final isPros = controller.selectedTab.value == 0;
-        final helper = isPros
-            ? '법안의 기대 효과(찬성)를 확인했습니다'
-            : '법안의 우려 사항(반대)을 확인했습니다';
-        final label = isPros
-            ? '우려되는 점(반대) 확인하기'
-            : '표결하러 가기';
-
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(helper, style: AppTextStyles.caption),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: ElevatedButton(
-                onPressed: controller.nextScene,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(label, style: AppTextStyles.buttonLarge),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward_rounded, size: 20),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (!isPros)
-                  TextButton.icon(
-                    onPressed: controller.previousScene,
-                    icon: const Icon(Icons.arrow_back_rounded, size: 17),
-                    label: const Text('기대 효과 보기'),
-                  )
-                else
-                  const SizedBox(width: 96),
-                TextButton(
-                  onPressed: controller.skipToDecision,
-                  child: const Text('핵심만 보고 표결'),
-                ),
-              ],
-            ),
-          ],
-        );
-      }),
     );
   }
 }
