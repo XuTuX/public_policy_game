@@ -40,7 +40,7 @@ class Step1IntroScene extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            bill.billName,
+            _keepAll(bill.billName),
             style: AppTextStyles.headlineMedium.copyWith(
               height: 1.3,
               letterSpacing: -0.3,
@@ -212,7 +212,7 @@ class _DialogueChatBubble extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    text,
+                    _keepAll(text),
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.textPrimary,
                       height: 1.5,
@@ -233,6 +233,11 @@ class _DialogueChatBubble extends StatelessWidget {
       );
     }
   }
+}
+
+/// 한글 단어(어절) 단위 줄바꿈을 지원하여 글자가 잘리지 않도록 하는 헬퍼 함수
+String _keepAll(String text) {
+  return text.replaceAllMapped(RegExp(r'([^ \n])(?=[^ \n])'), (m) => '${m[1]}\u200D');
 }
 
 
@@ -523,7 +528,7 @@ class _AideChatBubble extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  text,
+                  _keepAll(text),
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textPrimary,
                     height: 1.5,
@@ -605,7 +610,7 @@ class _ArgumentCard extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        argument.title,
+                        _keepAll(argument.title),
                         style: AppTextStyles.titleMedium.copyWith(
                           color: color,
                           fontWeight: FontWeight.bold,
@@ -618,7 +623,7 @@ class _ArgumentCard extends StatelessWidget {
                 
                 // 본문 설명
                 Text(
-                  argument.description,
+                  _keepAll(argument.description),
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textPrimary,
                     height: 1.5,
@@ -646,7 +651,7 @@ class _ArgumentCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            argument.example,
+                            _keepAll(argument.example),
                             style: AppTextStyles.bodySmall.copyWith(
                               color: AppColors.textSecondary,
                               height: 1.4,
@@ -699,7 +704,7 @@ class _SummaryBox extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  _keepAll(title),
                   style: AppTextStyles.labelLarge.copyWith(
                     color: color,
                     fontWeight: FontWeight.bold,
@@ -707,7 +712,7 @@ class _SummaryBox extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  description,
+                  _keepAll(description),
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textPrimary,
                   ),
