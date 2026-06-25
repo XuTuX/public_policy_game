@@ -24,35 +24,45 @@ class StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
         decoration: BoxDecoration(
           color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+          border: Border.all(
+            color: AppColors.divider.withValues(alpha: 0.6),
+            width: 1,
+          ),
           boxShadow: AppConstants.cardShadow,
         ),
         child: Column(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(12),
+                color: bgColor.withValues(alpha: 0.8),
+                shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 22),
+              child: Center(
+                child: Icon(icon, color: color, size: 24),
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Text(
               value,
-              style: AppTextStyles.headlineLarge.copyWith(
+              style: AppTextStyles.displayMedium.copyWith(
                 color: color,
                 fontWeight: FontWeight.w800,
+                height: 1.1,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               label,
-              style: AppTextStyles.caption,
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),

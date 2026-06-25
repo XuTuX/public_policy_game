@@ -24,85 +24,118 @@ class MatchResultCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppConstants.cardRadius),
         boxShadow: AppConstants.cardShadow,
         border: Border.all(
-          color: isBestMatch
-              ? AppColors.gold.withValues(alpha: 0.4)
-              : AppColors.voteNo.withValues(alpha: 0.3),
-          width: 2,
+          color: AppColors.divider.withValues(alpha: 0.6),
+          width: 1,
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppConstants.cardRadius - 1),
+        child: Stack(
           children: [
-            Row(
-              children: [
-                _buildRankBadge(),
-                const SizedBox(width: 16),
-                _buildProfile(),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            // Left accent colored bar
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 6,
+              child: Container(
+                color: isBestMatch ? AppColors.gold : AppColors.voteNo,
+              ),
+            ),
+            // Content Column
+            Padding(
+              padding: const EdgeInsets.only(left: 26, top: 20, right: 20, bottom: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        member.name,
-                        style: AppTextStyles.headlineSmall,
+                      _buildRankBadge(),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      _buildProfile(),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              member.name,
+                              style: AppTextStyles.headlineSmall.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.getPartyColor(member.party),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    '${member.party} · ${member.district}',
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 2),
-                      Row(
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: AppColors.getPartyColor(member.party),
-                              shape: BoxShape.circle,
+                          Text(
+                            '${member.matchRate.toStringAsFixed(0)}%',
+                            style: AppTextStyles.displayMedium.copyWith(
+                              color: _getMatchColor(member.matchRate),
+                              fontWeight: FontWeight.w900,
+                              height: 1.1,
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              '${member.party} · ${member.district}',
-                              style: AppTextStyles.caption,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          Text(
+                            '일치율',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.textTertiary,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '${member.matchRate.toStringAsFixed(0)}%',
-                      style: AppTextStyles.headlineLarge.copyWith(
-                        color: _getMatchColor(member.matchRate),
-                        fontWeight: FontWeight.w800,
-                      ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Divider(height: 1, color: AppColors.divider),
+                  ),
+                  Text(
+                    isBestMatch ? '✅ 이렇게 의견이 같았어요!' : '❌ 이렇게 의견이 달랐어요!',
+                    style: AppTextStyles.titleMedium.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
                     ),
-                    Text(
-                      '일치율',
-                      style: AppTextStyles.caption,
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 12),
+                  ..._buildComparisonList(),
+                ],
+              ),
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Divider(height: 1),
-            ),
-            Text(
-              isBestMatch ? '✅ 이렇게 의견이 같았어요!' : '❌ 이렇게 의견이 달랐어요!',
-              style: AppTextStyles.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            ..._buildComparisonList(),
           ],
         ),
       ),
@@ -110,24 +143,29 @@ class MatchResultCard extends StatelessWidget {
   }
 
   Widget _buildRankBadge() {
-    final bgColor = isBestMatch ? AppColors.gold : AppColors.voteNo;
-    final textColor = Colors.white;
+    final bgColor = isBestMatch
+        ? AppColors.gold.withValues(alpha: 0.12)
+        : AppColors.voteNo.withValues(alpha: 0.1);
+    final textColor = isBestMatch ? AppColors.gold : AppColors.voteNo;
+    final labelText = isBestMatch ? '정치 소울메이트 1위' : '가장 상반된 성향';
 
     return Container(
-      width: 36,
-      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bgColor,
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: textColor.withValues(alpha: 0.25),
+          width: 1,
+        ),
       ),
-      child: Center(
-        child: Text(
-          isBestMatch ? '1위' : '꼴찌',
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
-          ),
+      child: Text(
+        labelText,
+        style: TextStyle(
+          color: textColor,
+          fontWeight: FontWeight.w800,
+          fontSize: 11,
+          letterSpacing: -0.2,
         ),
       ),
     );
@@ -137,23 +175,23 @@ class MatchResultCard extends StatelessWidget {
     final partyColor = AppColors.getPartyColor(member.party);
 
     return Container(
-      width: 52,
-      height: 52,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: partyColor.withValues(alpha: 0.1),
+        color: partyColor.withValues(alpha: 0.08),
         border: Border.all(
-          color: partyColor.withValues(alpha: 0.3),
-          width: 2,
+          color: partyColor.withValues(alpha: 0.2),
+          width: 1.5,
         ),
       ),
       child: Center(
         child: Text(
-          member.name.substring(0, 1),
+          member.name.isNotEmpty ? member.name.substring(0, 1) : '',
           style: TextStyle(
             color: partyColor,
-            fontWeight: FontWeight.w700,
-            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
           ),
         ),
       ),
@@ -177,31 +215,49 @@ class MatchResultCard extends StatelessWidget {
       if (!isBestMatch && isMatch) continue;
 
       items.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
+        Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceVariant.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.divider.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
-                isMatch ? Icons.check_circle : Icons.cancel,
+                isMatch ? Icons.check_circle_rounded : Icons.cancel_rounded,
                 color: isMatch ? AppColors.voteYes : AppColors.voteNo,
                 size: 18,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       comp.billName,
-                      style: AppTextStyles.bodyMedium,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13.5,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '나: ${_voteTypeToString(comp.userVote)}  |  의원: ${_voteTypeToString(comp.memberVote.comparableChoice)}',
-                      style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        _buildVoteBadge('나', comp.userVote),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward, size: 10, color: AppColors.textTertiary),
+                        const SizedBox(width: 8),
+                        _buildVoteBadge('의원', comp.memberVote.comparableChoice),
+                      ],
                     ),
                   ],
                 ),
@@ -214,9 +270,14 @@ class MatchResultCard extends StatelessWidget {
 
     if (items.isEmpty) {
       items.add(
-        Text(
-          isBestMatch ? '일치한 법안이 없습니다.' : '불일치한 법안이 없습니다.',
-          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textTertiary),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          alignment: Alignment.center,
+          child: Text(
+            isBestMatch ? '일치한 법안이 없습니다.' : '불일치한 법안이 없습니다.',
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textTertiary),
+          ),
         ),
       );
     }
@@ -224,16 +285,31 @@ class MatchResultCard extends StatelessWidget {
     return items;
   }
 
-  String _voteTypeToString(VoteType? type) {
-    switch (type) {
-      case VoteType.yes:
-        return '찬성';
-      case VoteType.no:
-        return '반대';
-      case VoteType.abstain:
-        return '기권';
-      default:
-        return '알 수 없음';
+  Widget _buildVoteBadge(String who, VoteType? type) {
+    Color color = AppColors.textSecondary;
+    String label = '기권';
+    if (type == VoteType.yes) {
+      color = AppColors.voteYes;
+      label = '찬성';
+    } else if (type == VoteType.no) {
+      color = AppColors.voteNo;
+      label = '반대';
     }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        '$who: $label',
+        style: TextStyle(
+          color: color,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
   }
 }

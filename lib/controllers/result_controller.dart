@@ -1,3 +1,6 @@
+import 'dart:ui' as ui;
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/user_answer_model.dart';
@@ -11,6 +14,7 @@ import '../app/constants/app_constants.dart';
 
 /// 결과 화면 컨트롤러
 class ResultController extends GetxController {
+  final GlobalKey shareKey = GlobalKey();
   final UserRepository _userRepository = UserRepository();
   final BillRepositoryImpl _billRepository = BillRepositoryImpl();
   final VoteRepositoryImpl _voteRepository = VoteRepositoryImpl();
@@ -101,8 +105,44 @@ class ResultController extends GetxController {
   double get noRatio => totalBills > 0 ? noCount / totalBills : 0.0;
   double get abstainRatio => totalBills > 0 ? abstainCount / totalBills : 0.0;
 
-  /// 결과 SNS 공유
+  /// 결과 SNS 공유 (이미지 캡쳐 공유 우선, 실패 시 텍스트 공유)
   Future<void> shareResult() async {
+    try {
+      final boundary = shareKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) {
+        await _shareTextOnly();
+        return;
+      }
+
+      // 이미지를 비트맵으로 캡처 (고화질을 위해 3.0 배수 지정)
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) {
+        await _shareTextOnly();
+        return;
+      }
+      final pngBytes = byteData.buffer.asUint8List();
+
+      // 임시 파일 생성 대신 cross_file의 fromData를 통해 공유 파일 생성
+      final xFile = XFile.fromData(
+        pngBytes,
+        name: 'my_assembly_result.png',
+        mimeType: 'image/png',
+      );
+
+      final appLink = AppConstants.publicAppUrl.isEmpty
+          ? ''
+          : '\n\n직접 참여하기 👉 ${AppConstants.publicAppUrl}';
+      final text = '🗳️ [오늘부터 국회의원] 나의 의정 활동 보고서!\n'
+          '나와 가장 잘 맞는 정치 소울메이트 국회의원 결과 카드를 확인해 보세요!$appLink';
+
+      await Share.shareXFiles([xFile], text: text);
+    } catch (e) {
+      await _shareTextOnly();
+    }
+  }
+
+  Future<void> _shareTextOnly() async {
     final appLink = AppConstants.publicAppUrl.isEmpty
         ? ''
         : '\n\n직접 참여하기 👉 ${AppConstants.publicAppUrl}';
@@ -110,7 +150,7 @@ class ResultController extends GetxController {
         '• 찬성: $yesCount건\n'
         '• 반대: $noCount건\n'
         '• 기권: $abstainCount건\n\n'
-        '나와 가장 잘 맞는 정치 소울메이트 국회의원과 가치관 유형을 확인해 보세요!'
+        '나와 가장 잘 맞는 정치 소울메이트 국회의원을 확인해 보세요!'
         '$appLink';
     await Share.share(text);
   }
