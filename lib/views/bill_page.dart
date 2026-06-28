@@ -87,15 +87,28 @@ class _BillPageState extends State<BillPage> {
             Expanded(
               child: PageView(
                 controller: _pageController,
-                physics: const BouncingScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 onPageChanged: (index) {
                   _controller.setStep(index);
                 },
                 children: [
-                  Step2BackgroundScene(bill: bill),
-                  Step3ProsScene(bill: bill),
-                  Step4ConsScene(bill: bill),
-                  Step5SummaryScene(bill: bill, controller: _controller),
+                  Step2BackgroundScene(
+                    bill: bill,
+                    revealAll: _controller.isStepAlreadyCompleted(0),
+                  ),
+                  Step3ProsScene(
+                    bill: bill,
+                    revealAll: _controller.isStepAlreadyCompleted(1),
+                  ),
+                  Step4ConsScene(
+                    bill: bill,
+                    revealAll: _controller.isStepAlreadyCompleted(2),
+                  ),
+                  Step5SummaryScene(
+                    bill: bill,
+                    controller: _controller,
+                    revealAll: _controller.isStepAlreadyCompleted(3),
+                  ),
                 ],
               ),
             ),
@@ -187,7 +200,9 @@ class _BottomPanel extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(22),
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.05),
@@ -199,7 +214,7 @@ class _BottomPanel extends StatelessWidget {
             child: _VoteFeedback(voteType: lastVote, bill: bill),
           );
         }
-        
+
         // 투표 대기 상태일 때는 '이전' 버튼만 간략하게 제공
         return Container(
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
@@ -271,7 +286,9 @@ class _BottomPanel extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.3),
+                      disabledBackgroundColor: AppColors.primary.withValues(
+                        alpha: 0.3,
+                      ),
                       disabledForegroundColor: Colors.white70,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
@@ -296,8 +313,6 @@ class _BottomPanel extends StatelessWidget {
     });
   }
 }
-
-
 
 /// 투표 직후 피드백 표시
 class _VoteFeedback extends StatelessWidget {

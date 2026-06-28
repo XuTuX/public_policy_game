@@ -22,19 +22,15 @@ class BillController extends GetxController {
   final currentStep = 0.obs; // 0~3 for the 4 steps
   final fastMode = false.obs;
   final isStepCompleted = false.obs;
+  final completedSteps = <int>{}.obs;
 
   @override
   void onInit() {
     super.onInit();
     loadBills();
 
-    // 씬 전환 시 완료 상태 자동 리셋
-    ever(currentStep, (_) {
-      isStepCompleted.value = false;
-    });
-
     ever(currentIndex, (_) {
-      isStepCompleted.value = false;
+      _resetStepProgress();
     });
   }
 
@@ -43,10 +39,12 @@ class BillController extends GetxController {
     try {
       isLoading.value = true;
       final allBills = await _billRepository.getBills();
-      
+
       // 한번 플레이 시 최대 개수 제한 (매번 다양한 법안을 접할 수 있게 셔플)
       final shuffledBills = allBills.toList()..shuffle();
-      bills.value = shuffledBills.take(AppConstants.maxBillsPerSession).toList();
+      bills.value = shuffledBills
+          .take(AppConstants.maxBillsPerSession)
+          .toList();
     } catch (e) {
       final message = e is StateError ? e.message : '법안을 불러오는 데 실패했습니다';
       Get.snackbar('오류', message);
@@ -71,23 +69,47 @@ class BillController extends GetxController {
 
   /// 다음 단계로 이동
   void nextStep() {
-    if (currentStep.value < 3) {
-      currentStep.value++;
+    if (currentStep.value < 3 && isStepCompleted.value) {
+      _moveToStep(currentStep.value + 1);
     }
   }
 
   /// 이전 단계로 이동
   void previousStep() {
     if (currentStep.value > 0) {
-      currentStep.value--;
+      _moveToStep(currentStep.value - 1);
     }
   }
 
   /// 특정 단계로 바로 이동 (PageView 스와이프 등 연동용)
   void setStep(int step) {
     if (step >= 0 && step <= 3) {
-      currentStep.value = step;
+      _moveToStep(step);
     }
+  }
+
+  void markStepCompleted(int step) {
+    if (step < 0 || step > 3) return;
+    completedSteps.add(step);
+    if (currentStep.value == step) {
+      isStepCompleted.value = true;
+    }
+  }
+
+  bool isStepAlreadyCompleted(int step) {
+    return completedSteps.contains(step);
+  }
+
+  void _moveToStep(int step) {
+    currentStep.value = step;
+    isStepCompleted.value = completedSteps.contains(step);
+  }
+
+  void _resetStepProgress() {
+    completedSteps.clear();
+    currentStep.value = 0;
+    isStepCompleted.value = false;
+    lastVoteType.value = null;
   }
 
   void toggleFastMode() {
@@ -131,7 +153,6 @@ class BillController extends GetxController {
 
     // 다음 법안 또는 결과 화면으로
     if (currentIndex.value < bills.length - 1) {
-      currentStep.value = 0;
       currentIndex.value++;
     } else {
       // 모든 법안 완료 → 결과 화면

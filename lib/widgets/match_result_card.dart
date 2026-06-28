@@ -125,7 +125,7 @@ class MatchResultCard extends StatelessWidget {
                     child: Divider(height: 1, color: AppColors.divider),
                   ),
                   Text(
-                    isBestMatch ? '✅ 이렇게 의견이 같았어요!' : '❌ 이렇게 의견이 달랐어요!',
+                    isBestMatch ? '일치한 표결' : '다르게 판단한 표결',
                     style: AppTextStyles.titleMedium.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w700,
@@ -147,7 +147,7 @@ class MatchResultCard extends StatelessWidget {
         ? AppColors.gold.withValues(alpha: 0.12)
         : AppColors.voteNo.withValues(alpha: 0.1);
     final textColor = isBestMatch ? AppColors.gold : AppColors.voteNo;
-    final labelText = isBestMatch ? '정치 소울메이트 1위' : '가장 상반된 성향';
+    final labelText = isBestMatch ? '의견 일치 의원 1위' : '가장 낮은 일치율';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

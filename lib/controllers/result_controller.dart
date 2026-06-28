@@ -143,10 +143,10 @@ class ResultController extends GetxController {
 
       final appLink = AppConstants.publicAppUrl.isEmpty
           ? ''
-          : '\n\n직접 참여하기 👉 ${AppConstants.publicAppUrl}';
+          : '\n\n직접 참여하기: ${AppConstants.publicAppUrl}';
       final text =
-          '🗳️ [오늘부터 국회의원] 나의 의정 활동 보고서!\n'
-          '나와 가장 잘 맞는 정치 소울메이트 국회의원 결과 카드를 확인해 보세요!$appLink';
+          '[오늘부터 국회의원] 표결 성향 분석 결과\n'
+          '나와 의견 일치율이 높은 국회의원 결과를 확인해 보세요.$appLink';
 
       await Share.shareXFiles([xFile], text: text);
     } catch (e) {
@@ -157,13 +157,13 @@ class ResultController extends GetxController {
   Future<void> _shareTextOnly() async {
     final appLink = AppConstants.publicAppUrl.isEmpty
         ? ''
-        : '\n\n직접 참여하기 👉 ${AppConstants.publicAppUrl}';
+        : '\n\n직접 참여하기: ${AppConstants.publicAppUrl}';
     final text =
-        '🗳️ [오늘부터 국회의원] 나의 의정 활동 결과!\n\n'
+        '[오늘부터 국회의원] 표결 성향 분석 결과\n\n'
         '• 찬성: $yesCount건\n'
         '• 반대: $noCount건\n'
         '• 기권: $abstainCount건\n\n'
-        '나와 가장 잘 맞는 정치 소울메이트 국회의원을 확인해 보세요!'
+        '나와 의견 일치율이 높은 국회의원을 확인해 보세요.'
         '$appLink';
     await Share.share(text);
   }

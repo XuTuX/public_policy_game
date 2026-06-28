@@ -65,9 +65,10 @@ class HistoryPage extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Text(
-                        '🗳️',
-                        style: TextStyle(fontSize: 40),
+                      const Icon(
+                        Icons.how_to_vote_rounded,
+                        size: 40,
+                        color: AppColors.primary,
                       ),
                       const SizedBox(width: 16),
                       Column(
@@ -225,9 +226,10 @@ class HistoryPage extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: const Center(
-                child: Text(
-                  '🗳️',
-                  style: TextStyle(fontSize: 54),
+                child: Icon(
+                  Icons.how_to_vote_outlined,
+                  size: 54,
+                  color: AppColors.textTertiary,
                 ),
               ),
             ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),

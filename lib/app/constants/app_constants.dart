@@ -26,7 +26,9 @@ class AppConstants {
   );
 
   static const String _envSupabaseUrl = String.fromEnvironment('SUPABASE_URL');
-  static String get supabaseUrl => _envSupabaseUrl;
+  static String get supabaseUrl => _envSupabaseUrl.isEmpty
+      ? 'https://misquhwiizsosklhdldb.supabase.co'
+      : _envSupabaseUrl;
 
   static const String _envSupabasePublishableKey = String.fromEnvironment(
     'SUPABASE_PUBLISHABLE_KEY',
@@ -35,7 +37,7 @@ class AppConstants {
     if (_envSupabasePublishableKey.isNotEmpty) {
       return _envSupabasePublishableKey;
     }
-    return '';
+    return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pc3F1aHdpaXpzb3NrbGhkbGRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNjc5NzksImV4cCI6MjA5Nzg0Mzk3OX0.zgz2187NQIwP4lv84zAD6Ol1xAdMQdZFeUsJyKvBGxA';
   }
 
   static bool get hasSupabaseConfiguration =>
@@ -56,23 +58,23 @@ class AppConstants {
   static const Duration animPageTransition = Duration(milliseconds: 300);
 
   // ── UI Constants ──
-  static const double cardRadius = 16.0;
-  static const double buttonRadius = 14.0;
-  static const double chipRadius = 20.0;
+  static const double cardRadius = 12.0;
+  static const double buttonRadius = 12.0;
+  static const double chipRadius = 12.0;
   static const double pageHorizontalPadding = 20.0;
   static const double cardElevation = 0.0;
 
   // ── Shadows ──
   static List<BoxShadow> get cardShadow => [
     const BoxShadow(
-      color: Color(0x0A000000),
-      blurRadius: 10,
+      color: Color(0x07000000),
+      blurRadius: 8,
       offset: Offset(0, 2),
     ),
     const BoxShadow(
-      color: Color(0x05000000),
-      blurRadius: 20,
-      offset: Offset(0, 4),
+      color: Color(0x03000000),
+      blurRadius: 16,
+      offset: Offset(0, 3),
     ),
   ];
 

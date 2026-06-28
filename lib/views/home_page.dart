@@ -44,9 +44,10 @@ class HomePage extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
-                      child: Text(
-                        '💼',
-                        style: TextStyle(fontSize: 80),
+                      child: Icon(
+                        Icons.account_balance_rounded,
+                        size: 78,
+                        color: AppColors.primary,
                       ),
                     ),
                   ).animate().fadeIn(delay: 400.ms, duration: 500.ms).scale(
@@ -74,7 +75,11 @@ class HomePage extends StatelessWidget {
                             color: AppColors.primary.withValues(alpha: 0.1)),
                       ),
                       child: const Center(
-                        child: Text('👩‍💼', style: TextStyle(fontSize: 24)),
+                        child: Icon(
+                          Icons.support_agent_rounded,
+                          size: 24,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -123,7 +128,7 @@ class HomePage extends StatelessWidget {
                                   letterSpacing: -0.3,
                                 ),
                                 children: [
-                                  const TextSpan(text: '의원님, 출근하셨군요.\n오늘 본회의에서 처리하셔야 할 안건이 '),
+                                  const TextSpan(text: '오늘 검토할 본회의 안건이 '),
                                   TextSpan(
                                     text: controller.isLoading.value
                                         ? '...건'
@@ -133,7 +138,7 @@ class HomePage extends StatelessWidget {
                                       fontWeight: FontWeight.w800,
                                     ),
                                   ),
-                                  const TextSpan(text: ' 올라와 있습니다.\n검토를 시작하시겠습니까?'),
+                                  const TextSpan(text: ' 준비되어 있습니다.\n각 안건의 쟁점을 확인해 보세요.'),
                                 ],
                               ),
                             ),
@@ -191,7 +196,7 @@ class HomePage extends StatelessWidget {
                             ]
                           : [
                               Text(
-                                '업무 시작하기',
+                                '검토 시작하기',
                                 style: AppTextStyles.titleLarge.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700,

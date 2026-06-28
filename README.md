@@ -9,7 +9,7 @@ flutter pub get
 flutter run -d chrome
 ```
 
-로컬에서 실데이터를 보려면 `SUPABASE_URL`과 `SUPABASE_PUBLISHABLE_KEY`를 `--dart-define`으로 전달합니다. 국회·DeepSeek API 키는 Flutter 앱에서 사용하지 않습니다.
+기본 공개 Supabase 프로젝트로 실데이터를 불러옵니다. 다른 프로젝트를 사용할 때만 `SUPABASE_URL`과 `SUPABASE_PUBLISHABLE_KEY`를 `--dart-define`으로 전달합니다. 국회·DeepSeek API 키는 Flutter 앱에서 사용하지 않습니다.
 
 ## Supabase 실데이터 설정
 

@@ -73,7 +73,11 @@ class ResultPage extends StatelessWidget {
                               ],
                             ),
                             child: const Center(
-                              child: Text('🗳️', style: TextStyle(fontSize: 32)),
+                              child: Icon(
+                                Icons.how_to_vote_rounded,
+                                color: AppColors.primary,
+                                size: 32,
+                              ),
                             ),
                           ),
                         ),
@@ -87,7 +91,7 @@ class ResultPage extends StatelessWidget {
 
                       // ── 타이틀 ──
                       Text(
-                        '오늘의 의정 활동 완료!',
+                        '표결 성향 분석 완료',
                         style: AppTextStyles.displayMedium.copyWith(
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
@@ -101,7 +105,7 @@ class ResultPage extends StatelessWidget {
 
                       const SizedBox(height: 10),
                       Text(
-                        '수고하셨습니다, 의원님! 👏\n비서실에서 결과를 정리했습니다.',
+                        '선택한 표결을 바탕으로 성향과 의원 일치율을 정리했습니다.',
                         style: AppTextStyles.bodyLarge.copyWith(
                           color: AppColors.textSecondary,
                           height: 1.55,
@@ -366,7 +370,7 @@ class ResultPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '나의 정치 소울메이트 🤝',
+                              '의견 일치 의원',
                               style: AppTextStyles.headlineSmall.copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textPrimary,
@@ -384,12 +388,6 @@ class ResultPage extends StatelessWidget {
                           ],
                         );
                       }),
-                      const SizedBox(height: 16),
-                      _InfoNotice(
-                        icon: Icons.info_outline_rounded,
-                        title: '매칭 점수 계산 기준',
-                        body: controller.matchingRuleText,
-                      ),
                     ],
                   ),
                 ),
@@ -399,6 +397,12 @@ class ResultPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   children: [
+                    _InfoNotice(
+                      icon: Icons.info_outline_rounded,
+                      title: '매칭 점수 계산 기준',
+                      body: controller.matchingRuleText,
+                    ),
+                    const SizedBox(height: 16),
                     // 버튼들
                     SizedBox(
                       width: double.infinity,

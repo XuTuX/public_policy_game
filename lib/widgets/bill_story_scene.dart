@@ -16,8 +16,13 @@ import '../controllers/bill_controller.dart';
 // =========================================================================
 class Step2BackgroundScene extends StatefulWidget {
   final BillModel bill;
+  final bool revealAll;
 
-  const Step2BackgroundScene({super.key, required this.bill});
+  const Step2BackgroundScene({
+    super.key,
+    required this.bill,
+    this.revealAll = false,
+  });
 
   @override
   State<Step2BackgroundScene> createState() => _Step2BackgroundSceneState();
@@ -26,20 +31,39 @@ class Step2BackgroundScene extends StatefulWidget {
 class _Step2BackgroundSceneState extends State<Step2BackgroundScene> {
   final ScrollController _scrollController = ScrollController();
   int _visibleCount = 1;
-  late final List<_ChatMessage> _messages;
+  late List<_ChatMessage> _messages;
 
   @override
   void initState() {
     super.initState();
     _messages = _parseMessages();
+    _visibleCount = widget.revealAll
+        ? _messages.length
+        : (_messages.isEmpty ? 0 : 1);
 
     // 만약 배경 대화 목록이 1개 이하라면 바로 완료 상태로 초기화
-    if (_messages.length <= 1) {
+    if (_messages.length <= _visibleCount) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (Get.isRegistered<BillController>()) {
-          Get.find<BillController>().isStepCompleted.value = true;
-        }
+        _markCompleted();
       });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant Step2BackgroundScene oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.bill.id != widget.bill.id) {
+      _messages = _parseMessages();
+      _visibleCount = widget.revealAll
+          ? _messages.length
+          : (_messages.isEmpty ? 0 : 1);
+      if (_messages.length <= _visibleCount) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _markCompleted();
+        });
+      }
+    } else if (widget.revealAll && !oldWidget.revealAll) {
+      _revealAll();
     }
   }
 
@@ -50,7 +74,8 @@ class _Step2BackgroundSceneState extends State<Step2BackgroundScene> {
   }
 
   List<_ChatMessage> _parseMessages() {
-    final rawDialogues = widget.bill.narrative?.backgroundDialoguesList ?? 
+    final rawDialogues =
+        widget.bill.narrative?.backgroundDialoguesList ??
         ['배경 정보를 준비하지 못했습니다.'];
 
     final messages = <_ChatMessage>[];
@@ -92,9 +117,7 @@ class _Step2BackgroundSceneState extends State<Step2BackgroundScene> {
 
       // 끝까지 다 확인했을 때 완료 상태로 변경
       if (_visibleCount == _messages.length) {
-        if (Get.isRegistered<BillController>()) {
-          Get.find<BillController>().isStepCompleted.value = true;
-        }
+        _markCompleted();
       }
 
       Future.delayed(const Duration(milliseconds: 100), () {
@@ -106,6 +129,24 @@ class _Step2BackgroundSceneState extends State<Step2BackgroundScene> {
           );
         }
       });
+    }
+  }
+
+  void _revealAll() {
+    if (_visibleCount == _messages.length) {
+      _markCompleted();
+      return;
+    }
+
+    setState(() {
+      _visibleCount = _messages.length;
+    });
+    _markCompleted();
+  }
+
+  void _markCompleted() {
+    if (Get.isRegistered<BillController>()) {
+      Get.find<BillController>().markStepCompleted(0);
     }
   }
 
@@ -124,7 +165,10 @@ class _Step2BackgroundSceneState extends State<Step2BackgroundScene> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primarySurface,
                       borderRadius: BorderRadius.circular(6),
@@ -150,46 +194,60 @@ class _Step2BackgroundSceneState extends State<Step2BackgroundScene> {
                   const SizedBox(height: 32),
                   const _StepHeader(title: '도입 배경', step: 1),
                   const SizedBox(height: 24),
-                  ..._messages.sublist(0, _visibleCount).asMap().entries.map((entry) {
-                    final idx = entry.key;
-                    final msg = entry.value;
-                    final isFirstFromSender = idx == 0 || _messages[idx - 1].isUser != msg.isUser;
-                    return Padding(
-                      padding: EdgeInsets.only(bottom: isFirstFromSender ? 16 : 8),
-                      child: _DialogueChatBubble(
-                        text: msg.text,
-                        isUser: msg.isUser,
-                        showSenderInfo: isFirstFromSender,
-                      ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0, duration: 350.ms),
-                    );
-                  }),
+                  ..._messages.take(_visibleCount).toList().asMap().entries.map(
+                    (entry) {
+                      final idx = entry.key;
+                      final msg = entry.value;
+                      final isFirstFromSender =
+                          idx == 0 || _messages[idx - 1].isUser != msg.isUser;
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: isFirstFromSender ? 16 : 8,
+                        ),
+                        child:
+                            _DialogueChatBubble(
+                                  text: msg.text,
+                                  isUser: msg.isUser,
+                                  showSenderInfo: isFirstFromSender,
+                                )
+                                .animate()
+                                .fadeIn(duration: 350.ms)
+                                .slideY(begin: 0.05, end: 0, duration: 350.ms),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
           ),
           if (_visibleCount < _messages.length)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              color: AppColors.surface.withValues(alpha: 0.9),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.touch_app_rounded, size: 16, color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    Text(
-                      '화면을 탭하여 계속 읽기...',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  color: AppColors.surface.withValues(alpha: 0.9),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.touch_app_rounded,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '화면을 탭하여 계속 읽기...',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ).animate(onPlay: (c) => c.repeat(reverse: true))
-             .fadeIn(duration: 800.ms)
-             .fadeOut(duration: 800.ms),
+                  ),
+                )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .fadeIn(duration: 800.ms)
+                .fadeOut(duration: 800.ms),
         ],
       ),
     );
@@ -244,13 +302,21 @@ class _ChatMessage {
   _ChatMessage({required this.text, required this.isUser});
 }
 
-class _SourceNotice extends StatelessWidget {
+class _SourceNotice extends StatefulWidget {
   final BillModel bill;
 
   const _SourceNotice({required this.bill});
 
   @override
+  State<_SourceNotice> createState() => _SourceNoticeState();
+}
+
+class _SourceNoticeState extends State<_SourceNotice> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final bill = widget.bill;
     final sourceUri = Uri.tryParse(bill.officialSourceUrl);
     final canOpenSource = sourceUri != null && sourceUri.hasScheme;
     final dataAsOf = _formatDateTime(bill.dataAsOf);
@@ -274,46 +340,83 @@ class _SourceNotice extends StatelessWidget {
               _MetaChip(label: '의안번호', value: bill.billNo),
               if (bill.status.isNotEmpty)
                 _MetaChip(label: '처리상태', value: bill.status),
-              if (voteDate.isNotEmpty)
-                _MetaChip(label: '표결일', value: voteDate),
+              if (voteDate.isNotEmpty) _MetaChip(label: '표결일', value: voteDate),
               if (dataAsOf.isNotEmpty)
                 _MetaChip(label: '데이터 기준', value: dataAsOf),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            'AI 요약은 국회 공개 원문을 바탕으로 생성되며 오류가 있을 수 있습니다. 중요한 판단은 원문을 함께 확인해 주세요.',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-              height: 1.45,
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: () {
+              setState(() {
+                _expanded = !_expanded;
+              });
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.verified_outlined,
+                    size: 16,
+                    color: AppColors.info,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '출처 및 AI 요약 안내',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 20,
+                    color: AppColors.textTertiary,
+                  ),
+                ],
+              ),
             ),
           ),
-          if (bill.aiModel?.isNotEmpty == true) ...[
-            const SizedBox(height: 6),
-            Text(
-              '요약 모델: ${bill.aiModel}',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.textTertiary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-          if (canOpenSource) ...[
+          if (_expanded) ...[
             const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: () => launchUrl(
-                sourceUri,
-                mode: LaunchMode.externalApplication,
+            Text(
+              'AI 요약은 국회 공개 원문을 바탕으로 생성되며 오류가 있을 수 있습니다. 중요한 판단은 원문을 함께 확인해 주세요.',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.45,
               ),
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(0, 36),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                alignment: Alignment.centerLeft,
-              ),
-              icon: const Icon(Icons.open_in_new_rounded, size: 16),
-              label: const Text('국회 원문 열기'),
             ),
+            if (bill.aiModel?.isNotEmpty == true) ...[
+              const SizedBox(height: 6),
+              Text(
+                '요약 모델: ${bill.aiModel}',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.textTertiary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+            if (canOpenSource) ...[
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () =>
+                    launchUrl(sourceUri, mode: LaunchMode.externalApplication),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 36),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  alignment: Alignment.centerLeft,
+                ),
+                icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                label: const Text('국회 원문 열기'),
+              ),
+            ],
           ],
         ],
       ),
@@ -339,10 +442,7 @@ class _MetaChip extends StatelessWidget {
   final String label;
   final String value;
 
-  const _MetaChip({
-    required this.label,
-    required this.value,
-  });
+  const _MetaChip({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -391,14 +491,19 @@ class _DialogueChatBubble extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primarySurface,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
                       bottomLeft: const Radius.circular(16),
                       bottomRight: const Radius.circular(16),
-                      topRight: showSenderInfo ? const Radius.circular(4) : const Radius.circular(16),
+                      topRight: showSenderInfo
+                          ? const Radius.circular(4)
+                          : const Radius.circular(16),
                     ),
                     border: Border.all(
                       color: AppColors.primary.withValues(alpha: 0.15),
@@ -433,14 +538,14 @@ String _keepAll(String text) {
   return text;
 }
 
-
 // =========================================================================
 // 3단계: 찬성 의견 (Pros)
 // =========================================================================
 class Step3ProsScene extends StatefulWidget {
   final BillModel bill;
+  final bool revealAll;
 
-  const Step3ProsScene({super.key, required this.bill});
+  const Step3ProsScene({super.key, required this.bill, this.revealAll = false});
 
   @override
   State<Step3ProsScene> createState() => _Step3ProsSceneState();
@@ -454,12 +559,27 @@ class _Step3ProsSceneState extends State<Step3ProsScene> {
   void initState() {
     super.initState();
     final pros = widget.bill.summary?.prosList ?? [];
-    if (pros.isEmpty) {
+    _visibleCount = widget.revealAll ? pros.length : 0;
+    if (pros.isEmpty || widget.revealAll) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (Get.isRegistered<BillController>()) {
-          Get.find<BillController>().isStepCompleted.value = true;
-        }
+        _markCompleted();
       });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant Step3ProsScene oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final pros = widget.bill.summary?.prosList ?? [];
+    if (oldWidget.bill.id != widget.bill.id) {
+      _visibleCount = widget.revealAll ? pros.length : 0;
+      if (pros.isEmpty || widget.revealAll) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _markCompleted();
+        });
+      }
+    } else if (widget.revealAll && !oldWidget.revealAll) {
+      _revealAll();
     }
   }
 
@@ -478,9 +598,7 @@ class _Step3ProsSceneState extends State<Step3ProsScene> {
 
       // 찬성 논리 카드를 끝까지 모두 확인했을 때 완료 상태로 변경
       if (_visibleCount == pros.length) {
-        if (Get.isRegistered<BillController>()) {
-          Get.find<BillController>().isStepCompleted.value = true;
-        }
+        _markCompleted();
       }
 
       Future.delayed(const Duration(milliseconds: 100), () {
@@ -492,6 +610,25 @@ class _Step3ProsSceneState extends State<Step3ProsScene> {
           );
         }
       });
+    }
+  }
+
+  void _revealAll() {
+    final pros = widget.bill.summary?.prosList ?? [];
+    if (_visibleCount == pros.length) {
+      _markCompleted();
+      return;
+    }
+
+    setState(() {
+      _visibleCount = pros.length;
+    });
+    _markCompleted();
+  }
+
+  void _markCompleted() {
+    if (Get.isRegistered<BillController>()) {
+      Get.find<BillController>().markStepCompleted(1);
     }
   }
 
@@ -511,7 +648,11 @@ class _Step3ProsSceneState extends State<Step3ProsScene> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _StepHeader(title: '찬성 논리', step: 2, color: AppColors.accentDark),
+                  const _StepHeader(
+                    title: '찬성 논리',
+                    step: 2,
+                    color: AppColors.accentDark,
+                  ),
                   const SizedBox(height: 16),
                   const _AideChatBubble(
                     text: '이 법안을 지지하는 사람들은 다음과 같이 이야기합니다.',
@@ -521,38 +662,55 @@ class _Step3ProsSceneState extends State<Step3ProsScene> {
                   if (pros.isEmpty)
                     const Text('찬성 논리가 등록되지 않았습니다.')
                   else
-                    ...pros.sublist(0, _visibleCount).map((arg) => _ArgumentCard(
-                          argument: arg,
-                          icon: Icons.thumb_up_alt_rounded,
-                          color: AppColors.accentDark,
-                        ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0, duration: 350.ms)),
+                    ...pros
+                        .sublist(0, _visibleCount)
+                        .map(
+                          (arg) =>
+                              _ArgumentCard(
+                                    argument: arg,
+                                    icon: Icons.thumb_up_alt_rounded,
+                                    color: AppColors.accentDark,
+                                  )
+                                  .animate()
+                                  .fadeIn(duration: 350.ms)
+                                  .slideY(
+                                    begin: 0.05,
+                                    end: 0,
+                                    duration: 350.ms,
+                                  ),
+                        ),
                 ],
               ),
             ),
           ),
           if (pros.isNotEmpty && _visibleCount < pros.length)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              color: AppColors.surface.withValues(alpha: 0.9),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.touch_app_rounded, size: 16, color: AppColors.accentDark),
-                    const SizedBox(width: 8),
-                    Text(
-                      '화면을 탭하여 계속 읽기...',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.accentDark,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  color: AppColors.surface.withValues(alpha: 0.9),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.touch_app_rounded,
+                          size: 16,
+                          color: AppColors.accentDark,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '화면을 탭하여 계속 읽기...',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.accentDark,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ).animate(onPlay: (c) => c.repeat(reverse: true))
-             .fadeIn(duration: 800.ms)
-             .fadeOut(duration: 800.ms),
+                  ),
+                )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .fadeIn(duration: 800.ms)
+                .fadeOut(duration: 800.ms),
         ],
       ),
     );
@@ -564,8 +722,9 @@ class _Step3ProsSceneState extends State<Step3ProsScene> {
 // =========================================================================
 class Step4ConsScene extends StatefulWidget {
   final BillModel bill;
+  final bool revealAll;
 
-  const Step4ConsScene({super.key, required this.bill});
+  const Step4ConsScene({super.key, required this.bill, this.revealAll = false});
 
   @override
   State<Step4ConsScene> createState() => _Step4ConsSceneState();
@@ -579,12 +738,27 @@ class _Step4ConsSceneState extends State<Step4ConsScene> {
   void initState() {
     super.initState();
     final cons = widget.bill.summary?.consList ?? [];
-    if (cons.isEmpty) {
+    _visibleCount = widget.revealAll ? cons.length : 0;
+    if (cons.isEmpty || widget.revealAll) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (Get.isRegistered<BillController>()) {
-          Get.find<BillController>().isStepCompleted.value = true;
-        }
+        _markCompleted();
       });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant Step4ConsScene oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final cons = widget.bill.summary?.consList ?? [];
+    if (oldWidget.bill.id != widget.bill.id) {
+      _visibleCount = widget.revealAll ? cons.length : 0;
+      if (cons.isEmpty || widget.revealAll) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _markCompleted();
+        });
+      }
+    } else if (widget.revealAll && !oldWidget.revealAll) {
+      _revealAll();
     }
   }
 
@@ -603,9 +777,7 @@ class _Step4ConsSceneState extends State<Step4ConsScene> {
 
       // 반대 논리 카드를 끝까지 모두 확인했을 때 완료 상태로 변경
       if (_visibleCount == cons.length) {
-        if (Get.isRegistered<BillController>()) {
-          Get.find<BillController>().isStepCompleted.value = true;
-        }
+        _markCompleted();
       }
 
       Future.delayed(const Duration(milliseconds: 100), () {
@@ -617,6 +789,25 @@ class _Step4ConsSceneState extends State<Step4ConsScene> {
           );
         }
       });
+    }
+  }
+
+  void _revealAll() {
+    final cons = widget.bill.summary?.consList ?? [];
+    if (_visibleCount == cons.length) {
+      _markCompleted();
+      return;
+    }
+
+    setState(() {
+      _visibleCount = cons.length;
+    });
+    _markCompleted();
+  }
+
+  void _markCompleted() {
+    if (Get.isRegistered<BillController>()) {
+      Get.find<BillController>().markStepCompleted(2);
     }
   }
 
@@ -636,7 +827,11 @@ class _Step4ConsSceneState extends State<Step4ConsScene> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _StepHeader(title: '반대 및 우려사항', step: 3, color: AppColors.warning),
+                  const _StepHeader(
+                    title: '반대 및 우려사항',
+                    step: 3,
+                    color: AppColors.warning,
+                  ),
                   const SizedBox(height: 16),
                   const _AideChatBubble(
                     text: '반면, 이 법안에 우려를 표하는 사람들은 다음과 같은 부작용을 지적합니다.',
@@ -646,38 +841,55 @@ class _Step4ConsSceneState extends State<Step4ConsScene> {
                   if (cons.isEmpty)
                     const Text('우려 사항이 등록되지 않았습니다.')
                   else
-                    ...cons.sublist(0, _visibleCount).map((arg) => _ArgumentCard(
-                          argument: arg,
-                          icon: Icons.warning_amber_rounded,
-                          color: AppColors.warning,
-                        ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0, duration: 350.ms)),
+                    ...cons
+                        .sublist(0, _visibleCount)
+                        .map(
+                          (arg) =>
+                              _ArgumentCard(
+                                    argument: arg,
+                                    icon: Icons.warning_amber_rounded,
+                                    color: AppColors.warning,
+                                  )
+                                  .animate()
+                                  .fadeIn(duration: 350.ms)
+                                  .slideY(
+                                    begin: 0.05,
+                                    end: 0,
+                                    duration: 350.ms,
+                                  ),
+                        ),
                 ],
               ),
             ),
           ),
           if (cons.isNotEmpty && _visibleCount < cons.length)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              color: AppColors.surface.withValues(alpha: 0.9),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.touch_app_rounded, size: 16, color: AppColors.warning),
-                    const SizedBox(width: 8),
-                    Text(
-                      '화면을 탭하여 계속 읽기...',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.warning,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  color: AppColors.surface.withValues(alpha: 0.9),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.touch_app_rounded,
+                          size: 16,
+                          color: AppColors.warning,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '화면을 탭하여 계속 읽기...',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.warning,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ).animate(onPlay: (c) => c.repeat(reverse: true))
-             .fadeIn(duration: 800.ms)
-             .fadeOut(duration: 800.ms),
+                  ),
+                )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .fadeIn(duration: 800.ms)
+                .fadeOut(duration: 800.ms),
         ],
       ),
     );
@@ -690,8 +902,14 @@ class _Step4ConsSceneState extends State<Step4ConsScene> {
 class Step5SummaryScene extends StatefulWidget {
   final BillModel bill;
   final BillController controller;
+  final bool revealAll;
 
-  const Step5SummaryScene({super.key, required this.bill, required this.controller});
+  const Step5SummaryScene({
+    super.key,
+    required this.bill,
+    required this.controller,
+    this.revealAll = false,
+  });
 
   @override
   State<Step5SummaryScene> createState() => _Step5SummarySceneState();
@@ -700,6 +918,32 @@ class Step5SummaryScene extends StatefulWidget {
 class _Step5SummarySceneState extends State<Step5SummaryScene> {
   final ScrollController _scrollController = ScrollController();
   int _visibleCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _visibleCount = widget.revealAll ? 3 : 0;
+    if (widget.revealAll) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _markCompleted();
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant Step5SummaryScene oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.bill.id != widget.bill.id) {
+      _visibleCount = widget.revealAll ? 3 : 0;
+      if (widget.revealAll) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _markCompleted();
+        });
+      }
+    } else if (widget.revealAll && !oldWidget.revealAll) {
+      _revealAll();
+    }
+  }
 
   @override
   void dispose() {
@@ -712,6 +956,9 @@ class _Step5SummarySceneState extends State<Step5SummaryScene> {
       setState(() {
         _visibleCount++;
       });
+      if (_visibleCount == 3) {
+        _markCompleted();
+      }
       Future.delayed(const Duration(milliseconds: 100), () {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
@@ -724,9 +971,26 @@ class _Step5SummarySceneState extends State<Step5SummaryScene> {
     }
   }
 
+  void _revealAll() {
+    if (_visibleCount == 3) {
+      _markCompleted();
+      return;
+    }
+
+    setState(() {
+      _visibleCount = 3;
+    });
+    _markCompleted();
+  }
+
+  void _markCompleted() {
+    widget.controller.markStepCompleted(3);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final posImpact = widget.bill.narrative?.positiveImpact ?? '찬성 효과 요약이 없습니다.';
+    final posImpact =
+        widget.bill.narrative?.positiveImpact ?? '찬성 효과 요약이 없습니다.';
     final conImpact = widget.bill.narrative?.concernImpact ?? '우려 사항 요약이 없습니다.';
 
     return GestureDetector(
@@ -743,76 +1007,100 @@ class _Step5SummarySceneState extends State<Step5SummaryScene> {
                 children: [
                   const _StepHeader(title: '보좌관 최종 정리', step: 4),
                   const SizedBox(height: 24),
-                  const _AideChatBubble(text: '의원님, 마지막으로 양측의 핵심 주장을 요약해 드립니다.'),
-                  
+                  const _AideChatBubble(
+                    text: '의원님, 마지막으로 양측의 핵심 주장을 요약해 드립니다.',
+                  ),
+
                   if (_visibleCount >= 1) ...[
                     const SizedBox(height: 24),
                     _SummaryBox(
-                      title: '핵심 찬성 논리',
-                      description: posImpact,
-                      icon: Icons.thumb_up_alt_rounded,
-                      color: AppColors.accentDark,
-                    ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0, duration: 350.ms),
+                          title: '핵심 찬성 논리',
+                          description: posImpact,
+                          icon: Icons.thumb_up_alt_rounded,
+                          color: AppColors.accentDark,
+                        )
+                        .animate()
+                        .fadeIn(duration: 350.ms)
+                        .slideY(begin: 0.05, end: 0, duration: 350.ms),
                   ],
 
                   if (_visibleCount >= 2) ...[
                     const SizedBox(height: 16),
                     _SummaryBox(
-                      title: '핵심 반대 논리',
-                      description: conImpact,
-                      icon: Icons.warning_amber_rounded,
-                      color: AppColors.warning,
-                    ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0, duration: 350.ms),
+                          title: '핵심 반대 논리',
+                          description: conImpact,
+                          icon: Icons.warning_amber_rounded,
+                          color: AppColors.warning,
+                        )
+                        .animate()
+                        .fadeIn(duration: 350.ms)
+                        .slideY(begin: 0.05, end: 0, duration: 350.ms),
                   ],
 
                   if (_visibleCount >= 3) ...[
                     const SizedBox(height: 32),
-                    const _AideChatBubble(text: '의원님은 어떻게 판단하시겠습니까?').animate().fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0, duration: 350.ms),
+                    const _AideChatBubble(text: '의원님은 어떻게 판단하시겠습니까?')
+                        .animate()
+                        .fadeIn(duration: 350.ms)
+                        .slideY(begin: 0.05, end: 0, duration: 350.ms),
                     const SizedBox(height: 24),
-                    
+
                     // 투표 버튼 영역
                     Obx(() {
-                      final isAnimating = widget.controller.isAnimating.value;
-                      return IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              child: NarrativeVoteButton(
-                                voteType: VoteType.yes,
-                                title: '찬성',
-                                description: '기대 효과가\n더 크다',
-                                enabled: !isAnimating,
-                                isSelected: false,
-                                onPressed: () => widget.controller.vote(VoteType.yes),
-                              ),
+                          final isAnimating =
+                              widget.controller.isAnimating.value;
+                          return IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: NarrativeVoteButton(
+                                    voteType: VoteType.yes,
+                                    title: '찬성',
+                                    description: '기대 효과가\n더 크다',
+                                    enabled: !isAnimating,
+                                    isSelected: false,
+                                    onPressed: () =>
+                                        widget.controller.vote(VoteType.yes),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: NarrativeVoteButton(
+                                    voteType: VoteType.abstain,
+                                    title: '기권',
+                                    description: '더 깊은\n논의 필요',
+                                    enabled: !isAnimating,
+                                    isSelected: false,
+                                    onPressed: () => widget.controller.vote(
+                                      VoteType.abstain,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: NarrativeVoteButton(
+                                    voteType: VoteType.no,
+                                    title: '반대',
+                                    description: '부작용 우려가\n더 크다',
+                                    enabled: !isAnimating,
+                                    isSelected: false,
+                                    onPressed: () =>
+                                        widget.controller.vote(VoteType.no),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: NarrativeVoteButton(
-                                voteType: VoteType.abstain,
-                                title: '기권',
-                                description: '더 깊은\n논의 필요',
-                                enabled: !isAnimating,
-                                isSelected: false,
-                                onPressed: () => widget.controller.vote(VoteType.abstain),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: NarrativeVoteButton(
-                                voteType: VoteType.no,
-                                title: '반대',
-                                description: '부작용 우려가\n더 크다',
-                                enabled: !isAnimating,
-                                isSelected: false,
-                                onPressed: () => widget.controller.vote(VoteType.no),
-                              ),
-                            ),
-                          ],
+                          );
+                        })
+                        .animate()
+                        .fadeIn(duration: 400.ms, delay: 100.ms)
+                        .slideY(
+                          begin: 0.1,
+                          end: 0,
+                          duration: 400.ms,
+                          delay: 100.ms,
                         ),
-                      );
-                    }).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideY(begin: 0.1, end: 0, duration: 400.ms, delay: 100.ms),
                   ],
                 ],
               ),
@@ -820,34 +1108,37 @@ class _Step5SummarySceneState extends State<Step5SummaryScene> {
           ),
           if (_visibleCount < 3)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              color: AppColors.surface.withValues(alpha: 0.9),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.touch_app_rounded, size: 16, color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    Text(
-                      '화면을 탭하여 계속 읽기...',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  color: AppColors.surface.withValues(alpha: 0.9),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.touch_app_rounded,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '화면을 탭하여 계속 읽기...',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ).animate(onPlay: (c) => c.repeat(reverse: true))
-             .fadeIn(duration: 800.ms)
-             .fadeOut(duration: 800.ms),
+                  ),
+                )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .fadeIn(duration: 800.ms)
+                .fadeOut(duration: 800.ms),
         ],
       ),
     );
   }
 }
-
-
 
 // =========================================================================
 // 공통 컴포넌트
@@ -883,10 +1174,7 @@ class _StepHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Text(
-          title,
-          style: AppTextStyles.titleLarge.copyWith(color: color),
-        ),
+        Text(title, style: AppTextStyles.titleLarge.copyWith(color: color)),
       ],
     );
   }
@@ -917,9 +1205,7 @@ class _AideChatBubble extends StatelessWidget {
             decoration: BoxDecoration(
               color: accentColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
-              border: Border.all(
-                color: accentColor.withValues(alpha: 0.2),
-              ),
+              border: Border.all(color: accentColor.withValues(alpha: 0.2)),
             ),
             child: ClipOval(
               child: Image.asset(
@@ -927,7 +1213,11 @@ class _AideChatBubble extends StatelessWidget {
                 fit: BoxFit.cover,
                 alignment: const Alignment(0, -0.7),
                 errorBuilder: (context, error, stackTrace) => const Center(
-                  child: Text('👩‍💼', style: TextStyle(fontSize: 20)),
+                  child: Icon(
+                    Icons.support_agent_rounded,
+                    size: 20,
+                    color: AppColors.secondary,
+                  ),
                 ),
               ),
             ),
@@ -935,7 +1225,6 @@ class _AideChatBubble extends StatelessWidget {
           const SizedBox(width: 12),
         ] else
           const SizedBox(width: 52), // 아바타 공간만큼 좌측 여백 유지
-
         // 이름 + 말풍선
         Expanded(
           child: Column(
@@ -952,15 +1241,19 @@ class _AideChatBubble extends StatelessWidget {
                 const SizedBox(height: 4),
               ],
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: accentColor.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.only(
                     topRight: const Radius.circular(16),
                     bottomLeft: const Radius.circular(16),
                     bottomRight: const Radius.circular(16),
-                    topLeft: showSenderInfo ? const Radius.circular(4) : const Radius.circular(16),
+                    topLeft: showSenderInfo
+                        ? const Radius.circular(4)
+                        : const Radius.circular(16),
                   ),
                   border: Border.all(
                     color: accentColor.withValues(alpha: 0.12),
@@ -1002,10 +1295,7 @@ class _ArgumentCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: color.withValues(alpha: 0.2),
-            width: 1,
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),
@@ -1019,12 +1309,7 @@ class _ArgumentCard extends StatelessWidget {
           child: Container(
             // 좌측에 강조 라인을 줍니다
             decoration: BoxDecoration(
-              border: Border(
-                left: BorderSide(
-                  color: color,
-                  width: 4,
-                ),
-              ),
+              border: Border(left: BorderSide(color: color, width: 4)),
             ),
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -1040,11 +1325,7 @@ class _ArgumentCard extends StatelessWidget {
                         color: color.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
-                        icon,
-                        color: color,
-                        size: 18,
-                      ),
+                      child: Icon(icon, color: color, size: 18),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -1059,7 +1340,7 @@ class _ArgumentCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                
+
                 // 본문 설명
                 Text(
                   _keepAll(argument.description),
@@ -1068,7 +1349,7 @@ class _ArgumentCard extends StatelessWidget {
                     height: 1.5,
                   ),
                 ),
-                
+
                 // 구체적 예시 영역
                 if (argument.example.isNotEmpty) ...[
                   const SizedBox(height: 12),
