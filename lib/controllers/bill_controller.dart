@@ -1,3 +1,4 @@
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:vibration/vibration.dart';
 import '../models/bill_model.dart';
@@ -84,16 +85,20 @@ class BillController extends GetxController {
   /// 특정 단계로 바로 이동 (PageView 스와이프 등 연동용)
   void setStep(int step) {
     if (step >= 0 && step <= 3) {
-      _moveToStep(step);
+      _mutateAfterBuildIfNeeded(() {
+        _moveToStep(step);
+      });
     }
   }
 
   void markStepCompleted(int step) {
     if (step < 0 || step > 3) return;
-    completedSteps.add(step);
-    if (currentStep.value == step) {
-      isStepCompleted.value = true;
-    }
+    _mutateAfterBuildIfNeeded(() {
+      completedSteps.add(step);
+      if (currentStep.value == step) {
+        isStepCompleted.value = true;
+      }
+    });
   }
 
   bool isStepAlreadyCompleted(int step) {
@@ -106,10 +111,24 @@ class BillController extends GetxController {
   }
 
   void _resetStepProgress() {
-    completedSteps.clear();
-    currentStep.value = 0;
-    isStepCompleted.value = false;
-    lastVoteType.value = null;
+    _mutateAfterBuildIfNeeded(() {
+      completedSteps.clear();
+      currentStep.value = 0;
+      isStepCompleted.value = false;
+      lastVoteType.value = null;
+    });
+  }
+
+  void _mutateAfterBuildIfNeeded(void Function() mutation) {
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (!isClosed) mutation();
+      });
+      return;
+    }
+
+    mutation();
   }
 
   void toggleFastMode() {

@@ -1,8 +1,8 @@
 import '../app/constants/app_constants.dart';
 import '../models/bill_model.dart';
 import 'http_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'game_session_service.dart';
+import 'supabase_service.dart';
 
 /// Supabase RPC에서 공개된 실데이터 게임 세트를 조회한다.
 class BillApiService {
@@ -20,14 +20,9 @@ class BillApiService {
     final session = GameSessionService();
     if (session.bills.isNotEmpty) return session.bills;
 
-    if (!AppConstants.hasSupabaseConfiguration) {
-      throw StateError(
-        'Supabase 설정이 없습니다. '
-        'SUPABASE_URL과 SUPABASE_PUBLISHABLE_KEY를 설정해 주세요.',
-      );
-    }
+    await SupabaseService.ensureInitialized();
 
-    final response = await Supabase.instance.client.rpc('get_active_game');
+    final response = await SupabaseService.client.rpc('get_active_game');
     if (response is! Map || response['gameSetId'] == null) {
       throw StateError('아직 공개된 실데이터 게임 세트가 없습니다.');
     }

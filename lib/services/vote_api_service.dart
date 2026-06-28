@@ -1,9 +1,8 @@
-import '../app/constants/app_constants.dart';
 import '../models/vote_model.dart';
 import '../models/assembly_member_model.dart';
 import 'http_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'game_session_service.dart';
+import 'supabase_service.dart';
 
 /// Supabase RPC에서 공개된 게임 세트의 의원 표결정보를 조회한다.
 class VoteApiService {
@@ -17,14 +16,12 @@ class VoteApiService {
 
   Future<Map<String, dynamic>> _fetchGameVotes() async {
     if (_gameVotesCache != null) return _gameVotesCache!;
-    if (!AppConstants.hasSupabaseConfiguration) {
-      throw StateError('Supabase 설정이 없습니다.');
-    }
+    await SupabaseService.ensureInitialized();
     final gameSetId = GameSessionService().gameSetId;
     if (gameSetId.isEmpty) {
       throw StateError('활성 게임 세트가 없습니다. 법안을 먼저 불러오세요.');
     }
-    final response = await Supabase.instance.client.rpc(
+    final response = await SupabaseService.client.rpc(
       'get_game_votes',
       params: {'p_game_set_id': gameSetId},
     );

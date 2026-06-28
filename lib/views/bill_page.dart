@@ -19,12 +19,14 @@ class BillPage extends StatefulWidget {
 class _BillPageState extends State<BillPage> {
   final PageController _pageController = PageController();
   final BillController _controller = Get.find<BillController>();
+  late final Worker _currentStepWorker;
+  late final Worker _currentIndexWorker;
 
   @override
   void initState() {
     super.initState();
     // currentStep이 변경될 때 PageView를 동기화
-    ever(_controller.currentStep, (step) {
+    _currentStepWorker = ever(_controller.currentStep, (step) {
       if (_pageController.hasClients && _pageController.page?.round() != step) {
         _pageController.animateToPage(
           step,
@@ -35,7 +37,7 @@ class _BillPageState extends State<BillPage> {
     });
 
     // 법안이 바뀔 때 (currentIndex 변경 시) currentStep이 0으로 초기화되는데, 이때 PageView도 0으로 바로 이동
-    ever(_controller.currentIndex, (_) {
+    _currentIndexWorker = ever(_controller.currentIndex, (_) {
       if (_pageController.hasClients) {
         _pageController.jumpToPage(0);
       }
@@ -44,6 +46,8 @@ class _BillPageState extends State<BillPage> {
 
   @override
   void dispose() {
+    _currentStepWorker.dispose();
+    _currentIndexWorker.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -89,7 +93,10 @@ class _BillPageState extends State<BillPage> {
                 controller: _pageController,
                 physics: const NeverScrollableScrollPhysics(),
                 onPageChanged: (index) {
-                  _controller.setStep(index);
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    _controller.setStep(index);
+                  });
                 },
                 children: [
                   Step2BackgroundScene(

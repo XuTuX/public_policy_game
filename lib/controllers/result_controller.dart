@@ -71,7 +71,10 @@ class ResultController extends GetxController {
       categoryVotes.forEach((category, votes) {
         final total = votes.length;
         final yesCount = votes.where((v) => v == VoteType.yes).length;
-        stats[category] = total > 0 ? yesCount / total : 0.0;
+        // 데이터 보정 (Laplace Smoothing):
+        // 문항 수가 적을 때 무조건 100%나 0%가 나오는 것을 방지하기 위해
+        // 기본적으로 '찬성 1표, 반대 1표'가 깔려있다고 가정(50%)하고 계산합니다.
+        stats[category] = (yesCount + 1) / (total + 2);
       });
 
       categoryStats.value = stats;
@@ -116,12 +119,14 @@ class ResultController extends GetxController {
   double get abstainRatio => totalBills > 0 ? abstainCount / totalBills : 0.0;
 
   /// 결과 SNS 공유 (이미지 캡쳐 공유 우선, 실패 시 텍스트 공유)
-  Future<void> shareResult() async {
+  Future<void> shareResult(BuildContext context) async {
+    final shareOrigin = _shareOrigin(context);
+
     try {
       final boundary =
           shareKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) {
-        await _shareTextOnly();
+        await _shareTextOnly(shareOrigin: shareOrigin);
         return;
       }
 
@@ -129,7 +134,7 @@ class ResultController extends GetxController {
       final image = await boundary.toImage(pixelRatio: 3.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) {
-        await _shareTextOnly();
+        await _shareTextOnly(shareOrigin: shareOrigin);
         return;
       }
       final pngBytes = byteData.buffer.asUint8List();
@@ -148,13 +153,25 @@ class ResultController extends GetxController {
           '[오늘부터 국회의원] 표결 성향 분석 결과\n'
           '나와 의견 일치율이 높은 국회의원 결과를 확인해 보세요.$appLink';
 
-      await Share.shareXFiles([xFile], text: text);
+      await Share.shareXFiles(
+        [xFile],
+        text: text,
+        sharePositionOrigin: shareOrigin,
+      );
     } catch (e) {
-      await _shareTextOnly();
+      await _shareTextOnly(shareOrigin: shareOrigin);
     }
   }
 
-  Future<void> _shareTextOnly() async {
+  Rect _shareOrigin(BuildContext context) {
+    final overlay =
+        Overlay.maybeOf(context)?.context.findRenderObject() as RenderBox?;
+    final size = overlay?.size ?? MediaQuery.sizeOf(context);
+    final center = Offset(size.width / 2, size.height / 2);
+    return Rect.fromCenter(center: center, width: 1, height: 1);
+  }
+
+  Future<void> _shareTextOnly({required Rect shareOrigin}) async {
     final appLink = AppConstants.publicAppUrl.isEmpty
         ? ''
         : '\n\n직접 참여하기: ${AppConstants.publicAppUrl}';
@@ -165,7 +182,7 @@ class ResultController extends GetxController {
         '• 기권: $abstainCount건\n\n'
         '나와 의견 일치율이 높은 국회의원을 확인해 보세요.'
         '$appLink';
-    await Share.share(text);
+    await Share.share(text, sharePositionOrigin: shareOrigin);
   }
 
   void goHome() {

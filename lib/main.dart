@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app/theme/app_theme.dart';
 import 'app/routes/app_routes.dart';
 import 'app/routes/app_pages.dart';
 import 'app/constants/app_constants.dart';
 import 'services/local_storage_service.dart';
+import 'services/supabase_service.dart';
 import 'views/not_found_page.dart';
 import 'widgets/web_responsive_wrapper.dart';
 
@@ -19,24 +19,22 @@ void main() async {
   await GoogleFonts.pendingFonts();
 
   // 상태바 스타일 설정 (밝은 배경에 어두운 아이콘)
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.dark,
-    statusBarBrightness: Brightness.light,
-  ));
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+    ),
+  );
 
-  if (AppConstants.hasSupabaseConfiguration) {
-    await Supabase.initialize(
-      url: AppConstants.supabaseUrl,
-      publishableKey: AppConstants.supabasePublishableKey,
-    );
-  }
+  await SupabaseService.ensureInitialized();
 
   // 온보딩 완료 여부 확인
   final storageService = LocalStorageService();
   final onboardingCompleted = await storageService.isOnboardingCompleted();
-  final initialRoute =
-      onboardingCompleted ? AppRoutes.home : AppRoutes.onboarding;
+  final initialRoute = onboardingCompleted
+      ? AppRoutes.home
+      : AppRoutes.onboarding;
 
   runApp(MyApp(initialRoute: initialRoute));
 }
