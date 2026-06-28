@@ -306,6 +306,48 @@ class ResultPage extends StatelessWidget {
                         );
                       }),
 
+                      Obx(() {
+                        if (controller.statsErrorMessage.value.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.voteNoBg,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.voteNo.withValues(alpha: 0.25),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.error_outline_rounded,
+                                  color: AppColors.voteNo,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    controller.statsErrorMessage.value,
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: AppColors.textPrimary,
+                                      height: 1.45,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+
                       const SizedBox(height: 32),
 
                       // ── 매칭 결과 (Best) ──
@@ -342,6 +384,12 @@ class ResultPage extends StatelessWidget {
                           ],
                         );
                       }),
+                      const SizedBox(height: 16),
+                      _InfoNotice(
+                        icon: Icons.info_outline_rounded,
+                        title: '매칭 점수 계산 기준',
+                        body: controller.matchingRuleText,
+                      ),
                     ],
                   ),
                 ),
@@ -436,6 +484,60 @@ class ResultPage extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _InfoNotice extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String body;
+
+  const _InfoNotice({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariant.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: AppColors.info, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  body,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

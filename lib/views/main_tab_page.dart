@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../controllers/history_controller.dart';
 import '../app/theme/app_colors.dart';
 import 'home_page.dart';
 import 'history_page.dart';
@@ -74,6 +76,9 @@ class _MainTabPageState extends State<MainTabPage> {
         setState(() {
           _currentIndex = index;
         });
+        if (index == 1 && Get.isRegistered<HistoryController>()) {
+          Get.find<HistoryController>().loadHistory();
+        }
       },
       behavior: HitTestBehavior.opaque,
       child: Padding(

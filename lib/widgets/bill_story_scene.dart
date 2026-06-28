@@ -8,6 +8,7 @@ import '../widgets/narrative_vote_button.dart';
 import '../models/vote_model.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../controllers/bill_controller.dart';
 
 // =========================================================================
@@ -144,6 +145,8 @@ class _Step2BackgroundSceneState extends State<Step2BackgroundScene> {
                       letterSpacing: -0.3,
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  _SourceNotice(bill: widget.bill),
                   const SizedBox(height: 32),
                   const _StepHeader(title: '도입 배경', step: 1),
                   const SizedBox(height: 24),
@@ -239,6 +242,127 @@ class _ChatMessage {
   final bool isUser;
 
   _ChatMessage({required this.text, required this.isUser});
+}
+
+class _SourceNotice extends StatelessWidget {
+  final BillModel bill;
+
+  const _SourceNotice({required this.bill});
+
+  @override
+  Widget build(BuildContext context) {
+    final sourceUri = Uri.tryParse(bill.officialSourceUrl);
+    final canOpenSource = sourceUri != null && sourceUri.hasScheme;
+    final dataAsOf = _formatDateTime(bill.dataAsOf);
+    final voteDate = _formatDate(bill.voteDate);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariant.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _MetaChip(label: '의안번호', value: bill.billNo),
+              if (bill.status.isNotEmpty)
+                _MetaChip(label: '처리상태', value: bill.status),
+              if (voteDate.isNotEmpty)
+                _MetaChip(label: '표결일', value: voteDate),
+              if (dataAsOf.isNotEmpty)
+                _MetaChip(label: '데이터 기준', value: dataAsOf),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'AI 요약은 국회 공개 원문을 바탕으로 생성되며 오류가 있을 수 있습니다. 중요한 판단은 원문을 함께 확인해 주세요.',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.45,
+            ),
+          ),
+          if (bill.aiModel?.isNotEmpty == true) ...[
+            const SizedBox(height: 6),
+            Text(
+              '요약 모델: ${bill.aiModel}',
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.textTertiary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          if (canOpenSource) ...[
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: () => launchUrl(
+                sourceUri,
+                mode: LaunchMode.externalApplication,
+              ),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, 36),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                alignment: Alignment.centerLeft,
+              ),
+              icon: const Icon(Icons.open_in_new_rounded, size: 16),
+              label: const Text('국회 원문 열기'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return '';
+    return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+  }
+
+  String _formatDateTime(DateTime? date) {
+    if (date == null) return '';
+    final local = date.toLocal();
+    final formattedDate = _formatDate(local);
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$formattedDate $hour:$minute';
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _MetaChip({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Text(
+        '$label $value',
+        style: AppTextStyles.caption.copyWith(
+          color: AppColors.textSecondary,
+          fontWeight: FontWeight.w700,
+          height: 1.1,
+        ),
+      ),
+    );
+  }
 }
 
 /// 대화형 말풍선 (인덱스나 텍스트 내용에 따라 보좌관과 의원님을 구분하여 렌더링)

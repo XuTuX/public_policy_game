@@ -1,6 +1,6 @@
 # 오늘부터 국회의원
 
-실제 국회 법안을 쉽게 살펴보고 직접 표결하며, 나와 의견이 비슷한 국회의원을 찾아보는 Flutter 앱입니다. 개발용 Mock 모드와 Supabase 기반 실데이터 모드를 모두 지원합니다.
+실제 국회 법안을 쉽게 살펴보고 직접 표결하며, 나와 의견이 비슷한 국회의원을 찾아보는 Flutter 앱입니다. 앱은 Supabase에 공개된 검증 완료 게임 세트만 사용합니다.
 
 ## 로컬 실행
 
@@ -9,7 +9,7 @@ flutter pub get
 flutter run -d chrome
 ```
 
-Mock 모드가 기본값입니다. 국회·DeepSeek API 키는 Flutter 앱에서 사용하지 않습니다.
+로컬에서 실데이터를 보려면 `SUPABASE_URL`과 `SUPABASE_PUBLISHABLE_KEY`를 `--dart-define`으로 전달합니다. 국회·DeepSeek API 키는 Flutter 앱에서 사용하지 않습니다.
 
 ## Supabase 실데이터 설정
 
@@ -59,7 +59,6 @@ curl -X POST 'https://<project-ref>.supabase.co/functions/v1/sync-assembly' \
 
 ```bash
 flutter build web --release \
-  --dart-define=USE_MOCK_DATA=false \
   --dart-define=PUBLIC_APP_URL=https://example.com \
   --dart-define=SUPABASE_URL=https://<project-ref>.supabase.co \
   --dart-define=SUPABASE_PUBLISHABLE_KEY=<publishable-key>

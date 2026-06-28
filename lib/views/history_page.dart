@@ -16,9 +16,6 @@ class HistoryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // 이미 MainTabPage 바인딩에서 lazyPut 처리되어 있으므로 Get.find로 사용
     final controller = Get.find<HistoryController>();
-    
-    // 탭을 눌러 진입할 때마다 데이터를 갱신하도록 처리
-    controller.loadHistory();
 
     return Scaffold(
       backgroundColor: AppColors.background,

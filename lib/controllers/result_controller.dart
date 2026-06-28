@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
@@ -24,7 +25,8 @@ class ResultController extends GetxController {
   // ── Observable State ──
   final categoryStats = <String, double>{}.obs; // 카테고리 -> 찬성 비율 (0.0 ~ 1.0)
   final isStatsLoading = true.obs;
-  
+  final statsErrorMessage = ''.obs;
+
   final bestMatch = Rxn<AssemblyMemberModel>();
   final worstMatch = Rxn<AssemblyMemberModel>();
 
@@ -46,6 +48,7 @@ class ResultController extends GetxController {
   Future<void> _saveAndCalculateStats() async {
     try {
       isStatsLoading.value = true;
+      statsErrorMessage.value = '';
 
       // 1. 로컬 저장소에 표결 결과 누적 저장 및 레벨/배지 갱신
       if (answers.isNotEmpty) {
@@ -86,11 +89,18 @@ class ResultController extends GetxController {
         }
       }
     } catch (e) {
-      // 로깅 실패 무시
+      if (kDebugMode) {
+        debugPrint('ResultController._saveAndCalculateStats failed: $e');
+      }
+      statsErrorMessage.value = '일부 결과 분석을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.';
     } finally {
       isStatsLoading.value = false;
     }
   }
+
+  String get matchingRuleText =>
+      '일치율은 사용자와 의원의 찬성·반대·기권 선택이 같은 비율입니다. '
+      '불참·미투표는 계산에서 제외하고, 동률은 비교 가능한 법안 수와 의원명 순서로 정렬합니다.';
 
   int get totalBills => answers.length;
 
@@ -108,7 +118,8 @@ class ResultController extends GetxController {
   /// 결과 SNS 공유 (이미지 캡쳐 공유 우선, 실패 시 텍스트 공유)
   Future<void> shareResult() async {
     try {
-      final boundary = shareKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      final boundary =
+          shareKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) {
         await _shareTextOnly();
         return;
@@ -133,7 +144,8 @@ class ResultController extends GetxController {
       final appLink = AppConstants.publicAppUrl.isEmpty
           ? ''
           : '\n\n직접 참여하기 👉 ${AppConstants.publicAppUrl}';
-      final text = '🗳️ [오늘부터 국회의원] 나의 의정 활동 보고서!\n'
+      final text =
+          '🗳️ [오늘부터 국회의원] 나의 의정 활동 보고서!\n'
           '나와 가장 잘 맞는 정치 소울메이트 국회의원 결과 카드를 확인해 보세요!$appLink';
 
       await Share.shareXFiles([xFile], text: text);
@@ -146,7 +158,8 @@ class ResultController extends GetxController {
     final appLink = AppConstants.publicAppUrl.isEmpty
         ? ''
         : '\n\n직접 참여하기 👉 ${AppConstants.publicAppUrl}';
-    final text = '🗳️ [오늘부터 국회의원] 나의 의정 활동 결과!\n\n'
+    final text =
+        '🗳️ [오늘부터 국회의원] 나의 의정 활동 결과!\n\n'
         '• 찬성: $yesCount건\n'
         '• 반대: $noCount건\n'
         '• 기권: $abstainCount건\n\n'
@@ -154,8 +167,6 @@ class ResultController extends GetxController {
         '$appLink';
     await Share.share(text);
   }
-
-
 
   void goHome() {
     Get.offAllNamed(AppRoutes.home);

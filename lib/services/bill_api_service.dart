@@ -4,15 +4,13 @@ import 'http_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'game_session_service.dart';
 
-/// 의안정보 API 서비스
-/// 현재: Mock 데이터 반환
-/// 향후: 국회 공공데이터 의안정보 API 연동
+/// Supabase RPC에서 공개된 실데이터 게임 세트를 조회한다.
 class BillApiService {
-  // ignore: unused_field  // 향후 실제 API 연동 시 사용
+  // ignore: unused_field
   final HttpService _httpService;
 
   BillApiService({HttpService? httpService})
-      : _httpService = httpService ?? HttpService();
+    : _httpService = httpService ?? HttpService();
 
   /// 법안 목록 조회
   Future<List<BillModel>> fetchBills({
@@ -21,8 +19,6 @@ class BillApiService {
   }) async {
     final session = GameSessionService();
     if (session.bills.isNotEmpty) return session.bills;
-
-
 
     if (!AppConstants.hasSupabaseConfiguration) {
       throw StateError(
@@ -54,8 +50,6 @@ class BillApiService {
 
   /// 특정 법안 상세 조회
   Future<BillModel?> fetchBillById(String billId) async {
-
-
     final bills = await fetchBills();
     return bills.where((bill) => bill.id == billId).firstOrNull;
   }

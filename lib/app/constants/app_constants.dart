@@ -20,31 +20,22 @@ class AppConstants {
   // ── Public build configuration ──
   // Flutter Web의 dart-define 값은 빌드 결과물에서 확인할 수 있으므로
   // 비밀키가 아닌 공개 설정만 선언한다.
-  static const bool useMockData = bool.fromEnvironment(
-    'USE_MOCK_DATA',
-    defaultValue: false,
-  );
-
   static const String publicAppUrl = String.fromEnvironment(
     'PUBLIC_APP_URL',
     defaultValue: '',
   );
 
   static const String _envSupabaseUrl = String.fromEnvironment('SUPABASE_URL');
-  static String get supabaseUrl => _envSupabaseUrl.isEmpty
-      ? 'https://misquhwiizsosklhdldb.supabase.co'
-      : _envSupabaseUrl;
+  static String get supabaseUrl => _envSupabaseUrl;
 
   static const String _envSupabasePublishableKey = String.fromEnvironment(
     'SUPABASE_PUBLISHABLE_KEY',
   );
-  static const String _envSupabaseAnonKey = String.fromEnvironment(
-    'SUPABASE_ANON_KEY',
-  );
   static String get supabasePublishableKey {
-    if (_envSupabasePublishableKey.isNotEmpty) return _envSupabasePublishableKey;
-    if (_envSupabaseAnonKey.isNotEmpty) return _envSupabaseAnonKey;
-    return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pc3F1aHdpaXpzb3NrbGhkbGRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNjc5NzksImV4cCI6MjA5Nzg0Mzk3OX0.zgz2187NQIwP4lv84zAD6Ol1xAdMQdZFeUsJyKvBGxA';
+    if (_envSupabasePublishableKey.isNotEmpty) {
+      return _envSupabasePublishableKey;
+    }
+    return '';
   }
 
   static bool get hasSupabaseConfiguration =>

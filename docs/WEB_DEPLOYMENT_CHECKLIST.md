@@ -4,14 +4,14 @@
 
 ## 결론
 
-현재 버전은 **Mock 데이터 데모**와 **Supabase 기반 실데이터 모드**를 모두 지원합니다. 실데이터 모드를 운영하려면 `supabase/`의 마이그레이션·Edge Function을 배포하고 국회/DeepSeek 비밀값과 Cron Vault 값을 설정해야 합니다. 실제 키를 사용한 staging 전체 흐름 검증은 배포 전 필수입니다.
+현재 버전은 **Supabase 기반 실데이터 모드**만 지원합니다. 운영하려면 `supabase/`의 마이그레이션·Edge Function을 배포하고 국회/DeepSeek 비밀값과 Cron Vault 값을 설정해야 합니다. 실제 키를 사용한 staging 전체 흐름 검증은 배포 전 필수입니다.
 
 ## 이번 점검에서 반영한 항목
 
 - [x] `.env`와 변형 파일을 Git에서 제외하고 `.env.example`만 허용
 - [x] `.env`를 Flutter asset에서 제거해 웹 빌드에 API 키가 포함되지 않도록 수정
 - [x] `flutter_dotenv` 의존성과 런타임 `.env` 로딩 제거
-- [x] 공개 설정만 `--dart-define`으로 받도록 변경: `USE_MOCK_DATA`, `PUBLIC_APP_URL`
+- [x] 공개 설정만 `--dart-define`으로 받도록 변경: `PUBLIC_APP_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`
 - [x] 클라이언트에서 OpenAI/국회 API 키를 직접 사용하는 예시 제거
 - [x] 존재하지 않는 앱 경로에 대한 안내 화면 추가
 - [x] 낮은 높이의 데스크톱 창에서 웹 프레임이 넘치는 문제 방지
@@ -31,18 +31,19 @@
 - [ ] 허용 origin, 요청 크기 제한, 타임아웃, rate limit, 재시도 정책 적용
 - [x] 완성된 10건을 게임 세트로 스냅샷하고 부분 실패 시 직전 세트 유지
 - [x] DeepSeek JSON 응답을 Edge Function과 DB 제약으로 검증하고 출처 해시 보관
-- [x] `BillApiService`, `VoteApiService`의 비-Mock Supabase RPC 경로 구현
+- [x] 원문 수집 실패 시 제목 기반 추론을 금지하고 해당 법안을 게임 세트에서 제외
+- [x] `BillApiService`, `VoteApiService`의 Supabase RPC 경로 구현
 - [ ] API 계약 테스트와 실패/빈 데이터/부분 장애 테스트 추가
 
 공공 API 키도 브라우저에 두면 제3자가 복사해 할당량을 소진할 수 있습니다. OpenAI 등 과금 가능한 키는 절대 웹 앱에 넣으면 안 됩니다.
 
 ### 2. 데이터 정확성과 고지
 
-- [ ] 법안명, 의안번호, 제안일, 처리 상태, 원문 링크, 데이터 기준 시각 표시
+- [x] 법안명, 의안번호, 처리 상태, 원문 링크, 표결일, 데이터 기준 시각 표시
 - [ ] 의원 표결 데이터의 출처와 갱신 주기 표시
-- [ ] LLM 요약과 원문을 시각적으로 구분하고 “AI 요약은 오류 가능” 고지
+- [x] LLM 요약과 원문을 시각적으로 구분하고 “AI 요약은 오류 가능” 고지
 - [ ] 찬반 요약의 중립성 평가 기준과 수정 절차 마련
-- [ ] 매칭 점수 계산식, 동률 처리, 결측 표결 처리 공개
+- [x] 매칭 점수 계산식, 동률 처리, 결측 표결 처리 공개
 - [ ] 정당명·의원 정보 변경 및 임기 교체에 대응하는 갱신 절차 마련
 
 정치·공공정책 서비스는 단순 기능 오류보다 잘못된 출처·오래된 데이터·편향된 요약이 더 큰 운영 리스크입니다.
@@ -81,7 +82,8 @@
 
 ```bash
 flutter build web --release \
-  --dart-define=USE_MOCK_DATA=true \
+  --dart-define=SUPABASE_URL=https://<project-ref>.supabase.co \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=<publishable-key> \
   --dart-define=PUBLIC_APP_URL=https://실제도메인
 ```
 
@@ -90,7 +92,8 @@ flutter build web --release \
 ```bash
 flutter build web --release \
   --base-href=/public-policy-game/ \
-  --dart-define=USE_MOCK_DATA=true \
+  --dart-define=SUPABASE_URL=https://<project-ref>.supabase.co \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=<publishable-key> \
   --dart-define=PUBLIC_APP_URL=https://example.com/public-policy-game/
 ```
 
@@ -146,7 +149,8 @@ dart format --output=none --set-exit-if-changed lib test
 flutter analyze
 flutter test
 flutter build web --release \
-  --dart-define=USE_MOCK_DATA=true \
+  --dart-define=SUPABASE_URL=https://<project-ref>.supabase.co \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=<publishable-key> \
   --dart-define=PUBLIC_APP_URL=https://실제도메인
 ```
 

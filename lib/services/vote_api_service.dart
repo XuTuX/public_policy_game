@@ -5,15 +5,13 @@ import 'http_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'game_session_service.dart';
 
-/// 국회의원 본회의 표결정보 API 서비스
-/// 현재: Mock 데이터 반환
-/// 향후: 국회 공공데이터 표결정보 API 연동
+/// Supabase RPC에서 공개된 게임 세트의 의원 표결정보를 조회한다.
 class VoteApiService {
   // ignore: unused_field
   final HttpService _httpService;
 
   VoteApiService({HttpService? httpService})
-      : _httpService = httpService ?? HttpService();
+    : _httpService = httpService ?? HttpService();
 
   Map<String, dynamic>? _gameVotesCache;
 
@@ -37,8 +35,6 @@ class VoteApiService {
 
   /// 특정 법안의 표결 데이터 조회
   Future<List<VoteModel>> fetchVotesByBillId(String billId) async {
-
-
     final payload = await _fetchGameVotes();
     final rows = payload['votes'];
     if (rows is! List) return const [];
@@ -51,23 +47,21 @@ class VoteApiService {
 
   /// 전체 국회의원 목록 조회
   Future<List<AssemblyMemberModel>> fetchMembers() async {
-
-
     final payload = await _fetchGameVotes();
     final rows = payload['members'];
     if (rows is! List) return const [];
     return rows
         .whereType<Map>()
-        .map((row) =>
-            AssemblyMemberModel.fromJson(Map<String, dynamic>.from(row)))
+        .map(
+          (row) => AssemblyMemberModel.fromJson(Map<String, dynamic>.from(row)),
+        )
         .toList();
   }
 
   /// 특정 법안에 대한 모든 의원의 표결 데이터 일괄 조회
   Future<Map<String, List<VoteModel>>> fetchAllVotes(
-      List<String> billIds) async {
-
-
+    List<String> billIds,
+  ) async {
     final payload = await _fetchGameVotes();
     final rows = payload['votes'];
     final result = <String, List<VoteModel>>{

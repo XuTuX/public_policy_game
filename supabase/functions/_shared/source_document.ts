@@ -21,7 +21,7 @@ export async function fetchOfficialSource(
   const title = text(detail, "BILL_NAME", "BILL_NM");
   
   let sourceText = "";
-    let method = "official_api_summary";
+  const method = "official_api_summary";
 
   try {
     const apiKey = Deno.env.get("ASSEMBLY_API_KEY");
@@ -57,9 +57,7 @@ export async function fetchOfficialSource(
     sourceText = `법안명:\n${title}\n\n${summary}`;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    console.warn(`[sync-assembly] Fallback triggered for ${billId} (Reason: ${errorMsg})`);
-    sourceText = `법안명:\n${title}\n\n(안내: 국회 API 응답 데이터 부족으로 상세 본문을 수집하지 못했습니다. 위 법안 명칭을 바탕으로 주요 내용을 추론하여 요약해주세요.)`;
-    method = "fallback_title_only";
+    throw new Error(`Official source extraction failed for ${billId}: ${errorMsg}`);
   }
 
   return {
@@ -69,4 +67,3 @@ export async function fetchOfficialSource(
     method,
   };
 }
-
